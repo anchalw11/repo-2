@@ -55,9 +55,24 @@ def create_app(config_object='journal.config.DevelopmentConfig'):
     # Add after_request handler for all responses
     @app.after_request
     def after_request(response):
-        response.headers.add('Access-Control-Allow-Origin', '*')
+        # Allow requests from any origin in development, but restrict in production
+        allowed_origins = [
+            'http://localhost:5173',  # Local development
+            'https://main.d2at8owu9hshr.amplifyapp.com',  # Amplify domain
+            'https://traderedgepro.com'  # Production domain
+        ]
+        
+        origin = request.headers.get('Origin')
+        if origin in allowed_origins:
+            response.headers.add('Access-Control-Allow-Origin', origin)
+        
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,Accept,Origin')
         response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH')
+        
+        # Handle preflight requests
+        if request.method == 'OPTIONS':
+            response.status_code = 200
         return response
     
     # Handle 405 Method Not Allowed errors - REMOVE THIS TO AVOID CONFLICTS
