@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Support Hub - Customer Service Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-cyan: #00ffff;
+            --primary-purple: #8b5cf6;
+            --primary-green: #00ff88;
+            --primary-pink: #ff00ff;
+            --danger-red: #ff4444;
+            --warning-yellow: #ffaa00;
+            --bg-dark: #0a0a0f;
+            --bg-panel: rgba(15, 15, 35, 0.8);
+            --border-glow: rgba(0, 255, 255, 0.3);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a0033 50%, #0a0a0f 100%);
+            color: #ffffff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Animated Background */
+        .neural-bg {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .neural-particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: radial-gradient(circle, var(--primary-cyan), transparent);
+            border-radius: 50%;
+            animation: float 25s infinite linear;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) translateX(0) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.6;
+            }
+            90% {
+                opacity: 0.6;
+            }
+            100% {
+                transform: translateY(-100px) translateX(200px) scale(1);
+                opacity: 0;
+            }
+        }
+
+        /* Main Layout */
+        .dashboard-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 80px;
+            background: linear-gradient(180deg, rgba(139, 92, 246, 0.1), rgba(0, 0, 0, 0.5));
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--border-glow);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            transition: width 0.3s;
+            position: relative;
+            z-index: 100;
+        }
+
+        .sidebar:hover {
+            width: 250px;
+        }
+
+        .logo {
+            font-size: 32px;
+            margin-bottom: 40px;
+            background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+        }
+
+        .nav-item {
+            width: 60px;
+            height: 60px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 15px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, var(--primary-purple), transparent);
+            transform: translate(-50%, -50%);
+            transition: all 0.5s;
+        }
+
+        .nav-item:hover::before {
+            width: 100px;
+            height: 100px;
+        }
+
+        .nav-item:hover {
+            border-color: var(--primary-purple);
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, var(--primary-purple), var(--primary-pink));
+            border-color: var(--primary-purple);
+        }
+
+        .nav-icon {
+            font-size: 24px;
+        }
+
+        .nav-label {
+            position: absolute;
+            left: 70px;
+            white-space: nowrap;
+            background: rgba(139, 92, 246, 0.9);
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .sidebar:hover .nav-label {
+            opacity: 1;
+        }
+
+        /* Header */
+        .header {
+            height: 70px;
+            background: rgba(20, 20, 40, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-glow);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 30px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--primary-green);
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+        }
+
+        .agent-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .agent-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-purple), var(--primary-pink));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .agent-status {
+            width: 10px;
+            height: 10px;
+            background: var(--primary-green);
+            border-radius: 50%;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            border: 2px solid var(--bg-dark);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 0 10px rgba(0, 255, 136, 0);
+            }
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Chat List Panel */
+        .chat-list-panel {
+            width: 350px;
+            background: rgba(20, 20, 40, 0.6);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(139, 92, 246, 0.2);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 20px;
+            background: rgba(139, 92, 246, 0.1);
+            border-bottom: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 12px;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+        }
+
+        .search-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: white;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-tab {
+            flex: 1;
+            padding: 8px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .filter-tab:hover {
+            background: rgba(139, 92, 246, 0.2);
+        }
+
+        .filter-tab.active {
+            background: linear-gradient(135deg, var(--primary-purple), var(--primary-pink));
+            color: white;
+            border-color: var(--primary-purple);
+        }
+
+        .chat-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .chat-item {
+            background: rgba(139, 92, 246, 0.05);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chat-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary-purple), transparent);
+            animation: scan 3s infinite;
+        }
+
+        .chat-item:hover {
+            background: rgba(139, 92, 246, 0.1);
+            transform: translateX(5px);
+            border-color: var(--primary-purple);
+        }
+
+        .chat-item.active {
+            background: rgba(139, 92, 246, 0.2);
+            border-color: var(--primary-purple);
+        }
+
+        .chat-item.unread {
+            border-left: 3px solid var(--primary-green);
+        }
+
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .chat-name {
+            font-weight: 600;
+            color: var(--primary-cyan);
+        }
+
+        .chat-time {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .chat-preview {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .chat-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+        }
+
+        .priority-badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .priority-high {
+            background: rgba(255, 68, 68, 0.2);
+            color: var(--danger-red);
+            border: 1px solid var(--danger-red);
+        }
+
+        .priority-medium {
+            background: rgba(255, 170, 0, 0.2);
+            color: var(--warning-yellow);
+            border: 1px solid var(--warning-yellow);
+        }
+
+        .priority-low {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--primary-green);
+            border: 1px solid var(--primary-green);
+        }
+
+        .unread-count {
+            background: var(--primary-green);
+            color: var(--bg-dark);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        /* Chat Area */
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(10, 10, 20, 0.6);
+            backdrop-filter: blur(10px);
+        }
+
+        .chat-header-bar {
+            padding: 20px;
+            background: rgba(139, 92, 246, 0.1);
+            border-bottom: 1px solid rgba(139, 92, 246, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .customer-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .customer-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-cyan), var(--primary-green));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .customer-details h3 {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .customer-details p {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .chat-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .action-btn:hover {
+            background: rgba(139, 92, 246, 0.2);
+            transform: scale(1.1);
+            border-color: var(--primary-purple);
+        }
+
+        /* Messages Area */
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            display: flex;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.customer {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-purple), var(--primary-pink));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .message-content {
+            max-width: 70%;
+        }
+
+        .message-bubble {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 15px;
+            padding: 12px 16px;
+            position: relative;
+        }
+
+        .message.customer .message-bubble {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(0, 255, 136, 0.1));
+            border-color: var(--primary-cyan);
+        }
+
+        .message-text {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 5px;
+        }
+
+        /* Input Area */
+        .input-area {
+            padding: 20px;
+            background: rgba(20, 20, 40, 0.8);
+            border-top: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .input-toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .toolbar-btn {
+            padding: 8px 15px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 12px;
+        }
+
+        .toolbar-btn:hover {
+            background: rgba(139, 92, 246, 0.2);
+            border-color: var(--primary-purple);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+        }
+
+        .message-input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 12px;
+            padding: 12px 15px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            resize: none;
+            min-height: 50px;
+            max-height: 150px;
+            transition: all 0.3s;
+        }
+
+        .message-input:focus {
+            border-color: var(--primary-purple);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+        }
+
+        .send-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-purple), var(--primary-pink));
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+            font-size: 20px;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+        }
+
+        /* Right Sidebar */
+        .right-sidebar {
+            width: 320px;
+            background: rgba(20, 20, 40, 0.6);
+            backdrop-filter: blur(10px);
+            border-left: 1px solid rgba(139, 92, 246, 0.2);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .info-section {
+            background: rgba(139, 92, 246, 0.05);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary-purple);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .info-value {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+        }
+
+        /* Quick Responses */
+        .quick-responses {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .quick-response {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .quick-response:hover {
+            background: rgba(139, 92, 246, 0.1);
+            border-color: var(--primary-purple);
+            transform: translateX(5px);
+        }
+
+        /* Ticket Info */
+        .ticket-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .ticket-btn {
+            padding: 10px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.2));
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .ticket-btn:hover {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.3));
+            transform: scale(1.05);
+        }
+
+        /* Analytics Dashboard */
+        .analytics-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(20, 20, 40, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--primary-purple);
+            border-radius: 15px;
+            padding: 20px;
+            display: none;
+            min-width: 400px;
+            box-shadow: 0 10px 40px rgba(139, 92, 246, 0.3);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .analytics-panel.active {
+            display: block;
+        }
+
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .analytics-card {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .analytics-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-cyan);
+            margin-bottom: 5px;
+        }
+
+        .analytics-label {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--primary-purple);
+            border-radius: 50%;
+            animation: typingBounce 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typingBounce {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Status Indicators */
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-online {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--primary-green);
+        }
+
+        .status-away {
+            background: rgba(255, 170, 0, 0.2);
+            color: var(--warning-yellow);
+        }
+
+        .status-offline {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Floating Action Button */
+        .fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-purple), var(--primary-pink));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 40px rgba(139, 92, 246, 0.6);
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(20, 20, 30, 0.5);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, var(--primary-purple), var(--primary-pink));
+            border-radius: 4px;
+        }
+
+        /* Notification Badge */
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--danger-red);
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <!-- Neural Background -->
+    <div class="neural-bg" id="neuralBg"></div>
+
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">⚡</div>
+            <div class="nav-item active">
+                <span class="nav-icon">💬</span>
+                <span class="nav-label">Live Chat</span>
+            </div>
+            <div class="nav-item">
+                <span class="nav-icon">🎫</span>
+                <span class="nav-label">Tickets</span>
+                <span class="notification-badge">5</span>
+            </div>
+            <div class="nav-item">
+                <span class="nav-icon">👥</span>
+                <span class="nav-label">Customers</span>
+            </div>
+            <div class="nav-item">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">Analytics</span>
+            </div>
+            <div class="nav-item">
+                <span class="nav-icon">🤖</span>
+                <span class="nav-label">AI Assistant</span>
+            </div>
+            <div class="nav-item">
+                <span class="nav-icon">📚</span>
+                <span class="nav-label">Knowledge Base</span>
+            </div>
+            <div class="nav-item">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-label">Settings</span>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <h1 class="header-title">Quantum Support Hub</h1>
+                <div class="header-stats">
+                    <div class="stat-item">
+                        <div class="stat-value">24</div>
+                        <div class="stat-label">Active Chats</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">2.3s</div>
+                        <div class="stat-label">Avg Response</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">98%</div>
+                        <div class="stat-label">Satisfaction</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">147</div>
+                        <div class="stat-label">Resolved Today</div>
+                    </div>
+                </div>
+                <div class="agent-info">
+                    <div style="position: relative;">
+                        <div class="agent-avatar">JD</div>
+                        <div class="agent-status"></div>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600;">John Doe</div>
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.6);">Senior Agent</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Chat List Panel -->
+                <div class="chat-list-panel">
+                    <div class="panel-header">
+                        <div class="search-bar">
+                            <span>🔍</span>
+                            <input type="text" class="search-input" placeholder="Search conversations...">
+                        </div>
+                        <div class="filter-tabs">
+                            <div class="filter-tab active">All (24)</div>
+                            <div class="filter-tab">Waiting (8)</div>
+                            <div class="filter-tab">Active (12)</div>
+                            <div class="filter-tab">Resolved (4)</div>
+                        </div>
+                    </div>
+                    <div class="chat-list">
+                        <!-- Chat Item 1 - High Priority -->
+                        <div class="chat-item active unread">
+                            <div class="chat-header">
+                                <span class="chat-name">Sarah Johnson</span>
+                                <span class="chat-time">2 min ago</span>
+                            </div>
+                            <div class="chat-preview">I'm having issues with my trading account access...</div>
+                            <div class="chat-meta">
+                                <span class="priority-badge priority-high">High Priority</span>
+                                <span class="unread-count">3</span>
+                            </div>
+                        </div>
+
+                        <!-- Chat Item 2 -->
+                        <div class="chat-item">
+                            <div class="chat-header">
+                                <span class="chat-name">Mike Chen</span>
+                                <span class="chat-time">5 min ago</span>
+                            </div>
+                            <div class="chat-preview">Question about prop firm rules</div>
+                            <div class="chat-meta">
+                                <span class="priority-badge priority-medium">Medium</span>
+                            </div>
+                        </div>
+
+                        <!-- Chat Item 3 -->
+                        <div class="chat-item unread">
+                            <div class="chat-header">
+                                <span class="chat-name">Emma Wilson</span>
+                                <span class="chat-time">8 min ago</span>
+                            </div>
+                            <div class="chat-preview">Need help with signal configuration</div>
+                            <div class="chat-meta">
+                                <span class="priority-badge priority-low">Low</span>
+                                <span class="unread-count">1</span>
+                            </div>
+                        </div>
+
+                        <!-- Chat Item 4 -->
+                        <div class="chat-item">
+                            <div class="chat-header">
+                                <span class="chat-name">Alex Kumar</span>
+                                <span class="chat-time">15 min ago</span>
+                            </div>
+                            <div class="chat-preview">Withdrawal process inquiry</div>
+                            <div class="chat-meta">
+                                <span class="priority-badge priority-high">High Priority</span>
+                            </div>
+                        </div>
+
+                        <!-- Chat Item 5 -->
+                        <div class="chat-item">
+                            <div class="chat-header">
+                                <span class="chat-name">Lisa Park</span>
+                                <span class="chat-time">22 min ago</span>
+                            </div>
+                            <div class="chat-preview">Thank you for the quick response!</div>
+                            <div class="chat-meta">
+                                <span class="priority-badge priority-low">Low</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Area -->
+                <div class="chat-area">
+                    <div class="chat-header-bar">
+                        <div class="customer-info">
+                            <div class="customer-avatar">SJ</div>
+                            <div class="customer-details">
+                                <h3>Sarah Johnson</h3>
+                                <p>Customer ID: #CUS-2847 • <span class="status-indicator status-online">● Online</span></p>
+                            </div>
+                        </div>
+                        <div class="chat-actions">
+                            <div class="action-btn" title="Video Call">📹</div>
+                            <div class="action-btn" title="Voice Call">📞</div>
+                            <div class="action-btn" title="Screen Share">🖥️</div>
+                            <div class="action-btn" title="Transfer Chat">↗️</div>
+                            <div class="action-btn" title="End Chat">✖️</div>
+                        </div>
+                    </div>
+
+                    <div class="messages-area">
+                        <!-- Customer Message -->
+                        <div class="message customer">
+                            <div class="message-avatar">SJ</div>
+                            <div class="message-content">
+                                <div class="message-bubble">
+                                    <div class="message-text">Hi, I'm having trouble accessing my trading account. It says my credentials are invalid but I'm sure they're correct.</div>
+                                    <div class="message-time">2:45 PM</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Agent Message -->
+                        <div class="message agent">
+                            <div class="message-avatar">JD</div>
+                            <div class="message-content">
+                                <div class="message-bubble">
+                                    <div class="message-text">Hello Sarah! I'm sorry to hear you're experiencing login issues. I'm here to help you resolve this quickly. Let me check your account status.</div>
+                                    <div class="message-time">2:46 PM</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Customer Message -->
+                        <div class="message customer">
+                            <div class="message-avatar">SJ</div>
+                            <div class="message-content">
+                                <div class="message-bubble">
+                                    <div class="message-text">I tried resetting my password but didn't receive any email</div>
+                                    <div class="message-time">2:47 PM</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Agent Message -->
+                        <div class="message agent">
+                            <div class="message-avatar">JD</div>
+                            <div class="message-content">
+                                <div class="message-bubble">
+                                    <div class="message-text">I can see your account is active and in good standing. I'm sending you a password reset link to your registered email now. Please check your spam folder as well.</div>
+                                    <div class="message-time">2:48 PM</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Typing Indicator -->
+                        <div class="typing-indicator">
+                            <div class="message-avatar">SJ</div>
+                            <div class="typing-dots">
+                                <div class="typing-dot"></div>
+                                <div class="typing-dot"></div>
+                                <div class="typing-dot"></div>
+                            </div>
+                            <span style="font-size: 12px; color: rgba(255,255,255,0.5); margin-left: 10px;">Sarah is typing...</span>
+                        </div>
+                    </div>
+
+                    <div class="input-area">
+                        <div class="input-toolbar">
+                            <button class="toolbar-btn">📎 Attach</button>
+                            <button class="toolbar-btn">😊 Emoji</button>
+                            <button class="toolbar-btn">📝 Templates</button>
+                            <button class="toolbar-btn">🤖 AI Suggest</button>
+                            <button class="toolbar-btn">📚 Knowledge Base</button>
+                        </div>
+                        <div class="input-wrapper">
+                            <textarea class="message-input" placeholder="Type your message..."></textarea>
+                            <button class="send-btn">➤</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Sidebar -->
+                <div class="right-sidebar">
+                    <!-- Customer Information -->
+                    <div class="info-section">
+                        <h3 class="section-title">Customer Details</h3>
+                        <div class="info-item">
+                            <span class="info-label">Name</span>
+                            <span class="info-value">Sarah Johnson</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Email</span>
+                            <span class="info-value">sarah.j@email.com</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Phone</span>
+                            <span class="info-value">+1 234-567-8900</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Account Type</span>
+                            <span class="info-value">Professional</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Member Since</span>
+                            <span class="info-value">Jan 15, 2024</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Total Trades</span>
+                            <span class="info-value">847</span>
+                        </div>
+                    </div>
+
+                    <!-- Ticket Information -->
+                    <div class="info-section">
+                        <h3 class="section-title">Ticket #TK-9847</h3>
+                        <div class="info-item">
+                            <span class="info-label">Category</span>
+                            <span class="info-value">Account Access</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Priority</span>
+                            <span class="info-value" style="color: var(--danger-red);">High</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Status</span>
+                            <span class="info-value" style="color: var(--warning-yellow);">In Progress</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Created</span>
+                            <span class="info-value">10 min ago</span>
+                        </div>
+                        <div class="ticket-actions">
+                            <button class="ticket-btn">Escalate</button>
+                            <button class="ticket-btn">Transfer</button>
+                            <button class="ticket-btn">Add Note</button>
+                            <button class="ticket-btn">Resolve</button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Responses -->
+                    <div class="info-section">
+                        <h3 class="section-title">Quick Responses</h3>
+                        <div class="quick-responses">
+                            <div class="quick-response">
+                                I've reset your password. Please check your email.
+                            </div>
+                            <div class="quick-response">
+                                Let me connect you with our technical team.
+                            </div>
+                            <div class="quick-response">
+                                Your account has been verified and activated.
+                            </div>
+                            <div class="quick-response">
+                                Please clear your browser cache and try again.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="info-section">
+                        <h3 class="section-title">Recent Activity</h3>
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.8;">
+                            <div>• Login attempt failed - 2:40 PM</div>
+                            <div>• Password reset requested - 2:42 PM</div>
+                            <div>• Support ticket created - 2:45 PM</div>
+                            <div>• Chat initiated - 2:45 PM</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics Panel (Hidden by default) -->
+    <div class="analytics-panel" id="analyticsPanel">
+        <h3 style="margin-bottom: 15px; color: var(--primary-purple);">Real-time Analytics</h3>
+        <div class="analytics-grid">
+            <div class="analytics-card">
+                <div class="analytics-value">3.2s</div>
+                <div class="analytics-label">First Response</div>
+            </div>
+            <div class="analytics-card">
+                <div class="analytics-value">45s</div>
+                <div class="analytics-label">Avg Handle Time</div>
+            </div>
+            <div class="analytics-card">
+                <div class="analytics-value">4.8/5</div>
+                <div class="analytics-label">Customer Rating</div>
+            </div>
+            <div class="analytics-card">
+                <div class="analytics-value">92%</div>
+                <div class="analytics-label">Resolution Rate</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <div class="fab" onclick="toggleAnalytics()">
+        📊
+    </div>
+
+    <script>
+        // Initialize neural background
+        function createNeuralParticles() {
+            const bg = document.getElementById('neuralBg');
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'neural-particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 25 + 's';
+                particle.style.animationDuration = (20 + Math.random() * 10) + 's';
+                bg.appendChild(particle);
+            }
+        }
+
+        // Toggle analytics panel
+        function toggleAnalytics() {
+            const panel = document.getElementById('analyticsPanel');
+            panel.classList.toggle('active');
+        }
+
+        // Simulate real-time updates
+        function updateStats() {
+            // Update active chats
+            const activeChats = document.querySelector('.stat-value');
+            if (activeChats) {
+                const current = parseInt(activeChats.textContent);
+                const change = Math.random() > 0.5 ? 1 : -1;
+                const newValue = Math.max(0, current + change);
+                activeChats.textContent = newValue;
+            }
+        }
+
+        // Handle message sending
+        document.querySelector('.send-btn').addEventListener('click', function() {
+            const input = document.querySelector('.message-input');
+            const messageText = input.value.trim();
+            
+            if (messageText) {
+                // Add agent message
+                const messagesArea = document.querySelector('.messages-area');
+                const typingIndicator = document.querySelector('.typing-indicator');
+                
+                const newMessage = document.createElement('div');
+                newMessage.className = 'message agent';
+                newMessage.innerHTML = `
+                    <div class="message-avatar">JD</div>
+                    <div class="message-content">
+                        <div class="message-bubble">
+                            <div class="message-text">${messageText}</div>
+                            <div class="message-time">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                        </div>
+                    </div>
+                `;
+                
+                messagesArea.insertBefore(newMessage, typingIndicator);
+                input.value = '';
+                messagesArea.scrollTop = messagesArea.scrollHeight;
+                
+                // Simulate customer typing response
+                setTimeout(() => {
+                    typingIndicator.style.display = 'flex';
+                }, 2000);
+            }
+        });
+
+        // Handle Enter key in message input
+        document.querySelector('.message-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.querySelector('.send-btn').click();
+            }
+        });
+
+        // Handle chat item clicks
+        document.querySelectorAll('.chat-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.chat-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                this.classList.remove('unread');
+                
+                const unreadCount = this.querySelector('.unread-count');
+                if (unreadCount) {
+                    unreadCount.remove();
+                }
+            });
+        });
+
+        // Handle nav item clicks
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Handle filter tab clicks
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Handle quick response clicks
+        document.querySelectorAll('.quick-response').forEach(response => {
+            response.addEventListener('click', function() {
+                document.querySelector('.message-input').value = this.textContent.trim();
+            });
+        });
+
+        // Initialize
+        window.onload = function() {
+            createNeuralParticles();
+            
+            // Simulate real-time updates
+            setInterval(updateStats, 5000);
+            
+            // Simulate new messages
+            setInterval(() => {
+                const chatList = document.querySelector('.chat-list');
+                const firstItem = chatList.querySelector('.chat-item');
+                if (firstItem && Math.random() > 0.7) {
+                    firstItem.classList.add('unread');
+                    const time = firstItem.querySelector('.chat-time');
+                    if (time) {
+                        time.textContent = 'Just now';
+                    }
+                }
+            }, 10000);
+        };
+
+        // Auto-resize message input
+        const messageInput = document.querySelector('.message-input');
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+
+        // Make buttons functional
+        document.addEventListener('DOMContentLoaded', () => {
+            const socket = io();
+
+            // Handle chat actions
+            document.querySelector('.action-btn[title="Video Call"]').addEventListener('click', () => alert('Video call initiated'));
+            document.querySelector('.action-btn[title="Voice Call"]').addEventListener('click', () => alert('Voice call initiated'));
+            document.querySelector('.action-btn[title="Screen Share"]').addEventListener('click', () => alert('Screen share initiated'));
+            document.querySelector('.action-btn[title="Transfer Chat"]').addEventListener('click', () => alert('Chat transfer initiated'));
+            document.querySelector('.action-btn[title="End Chat"]').addEventListener('click', () => alert('Chat ended'));
+
+            // Handle ticket actions
+            document.querySelector('.ticket-btn:nth-child(1)').addEventListener('click', () => alert('Ticket escalated'));
+            document.querySelector('.ticket-btn:nth-child(2)').addEventListener('click', () => alert('Ticket transferred'));
+            document.querySelector('.ticket-btn:nth-child(3)').addEventListener('click', () => alert('Note added to ticket'));
+            document.querySelector('.ticket-btn:nth-child(4)').addEventListener('click', () => alert('Ticket resolved'));
+
+            // Handle toolbar buttons
+            document.querySelector('.toolbar-btn:nth-child(1)').addEventListener('click', () => document.getElementById('fileInput').click());
+            document.querySelector('.toolbar-btn:nth-child(2)').addEventListener('click', () => alert('Emoji picker opened'));
+            document.querySelector('.toolbar-btn:nth-child(3)').addEventListener('click', () => alert('Templates opened'));
+            document.querySelector('.toolbar-btn:nth-child(4)').addEventListener('click', async () => {
+                const message = document.querySelector('.message-input').value;
+                if (message) {
+                    const response = await fetch('/api/chatbot', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message }),
+                    }).then(res => res.json());
+                    alert(`AI Suggestion: ${response.response}`);
+                }
+            });
+            document.querySelector('.toolbar-btn:nth-child(5)').addEventListener('click', async () => {
+                const query = prompt('Enter your search query for the knowledge base:');
+                if (query) {
+                    const results = await fetch(`/api/knowledge-base?query=${query}`).then(res => res.json());
+                    alert(`Found ${results.length} results:\n${results.map(r => r.title).join('\n')}`);
+                }
+            });
+        });
+    </script>
+    <input type="file" id="fileInput" style="display: none;" />
+</body>
+</html>

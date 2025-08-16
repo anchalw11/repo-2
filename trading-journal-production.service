@@ -1,0 +1,18 @@
+[Unit]
+Description=Trading Journal Production Application
+After=network.target
+
+[Service]
+Type=exec
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/trading-journal
+Environment=PATH=/var/www/trading-journal/venv/bin
+Environment=FLASK_ENV=production
+ExecStart=/var/www/trading-journal/venv/bin/gunicorn --bind 127.0.0.1:5000 --workers 4 --timeout 120 wsgi_production_fixed:application
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,16 @@
+[Unit]
+Description=Trading Journal Flask App
+After=network.target
+
+[Service]
+Type=exec
+User=www-data
+Group=www-data
+WorkingDirectory=/path/to/your/app
+Environment=PATH=/path/to/your/app/venv/bin
+EnvironmentFile=/path/to/your/app/.env
+ExecStart=/path/to/your/app/venv/bin/gunicorn --bind 127.0.0.1:5000 --workers 4 wsgi:application
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
