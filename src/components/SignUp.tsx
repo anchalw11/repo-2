@@ -40,8 +40,11 @@ const SignUp = () => {
     if (!formData.email || !formData.email.includes('@')) {
       return 'Please enter a valid email address';
     }
-    if (formData.password.length < 8) {
-      return 'Password must be at least 8 characters long';
+    if (formData.password.length < 12) {
+      return 'Password must be at least 12 characters long';
+    }
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(formData.password)) {
+      return 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character';
     }
     if (formData.password !== formData.confirmPassword) {
       return 'Passwords do not match';
@@ -84,7 +87,7 @@ const SignUp = () => {
         accountType: 'personal' as const,
         riskTolerance: 'moderate' as const,
         isAuthenticated: true,
-        setupComplete: false, // Setup is not complete yet
+        setupComplete: false, // Setup will be completed after payment
         selectedPlan,
         token: access_token,
       };
@@ -209,9 +212,9 @@ const SignUp = () => {
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
                   className="w-full pl-10 pr-12 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Create a strong password"
+                  placeholder="Create a strong password (12+ chars, mixed case, numbers, symbols)"
                   required
-                  minLength={8}
+                  minLength={12}
                 />
                 <button
                   type="button"
@@ -222,7 +225,7 @@ const SignUp = () => {
                 </button>
               </div>
               <div className="mt-2 text-xs text-gray-400">
-                Password must be at least 8 characters long
+                Password must be at least 12 characters with uppercase, lowercase, numbers, and special characters
               </div>
             </div>
 

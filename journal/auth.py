@@ -45,7 +45,11 @@ def register():
     # Ensure it's a POST request
     if request.method != 'POST':
         logging.error(f"Invalid method {request.method} for register endpoint")
-        return jsonify({"error": "Method not allowed", "allowed_methods": ["POST", "OPTIONS"]}), 405
+        response = jsonify({"error": "Method not allowed", "allowed_methods": ["POST", "OPTIONS"]})
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With,Accept,Origin")
+        response.headers.add('Access-Control-Allow-Methods', "POST,OPTIONS")
+        return response, 405
         
     try:
         data = request.get_json()

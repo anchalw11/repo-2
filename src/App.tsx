@@ -4,12 +4,12 @@ import LandingPage from './components/LandingPage';
 import SignUp from './components/SignUp';
 import SignIn from './components/SignIn';
 import MembershipPlans from './components/MembershipPlans';
+import PaymentFlow from './components/PaymentFlow';
+import PaymentIntegration from './components/PaymentIntegration';
 import PropFirmSelection from './components/PropFirmSelection';
 import AccountConfiguration from './components/AccountConfiguration';
 import RiskConfiguration from './components/RiskConfiguration';
 import TradingPlanGeneration from './components/TradingPlanGenerator';
-import PaymentFlow from './components/PaymentFlow';
-import Questionnaire from './components/Questionnaire';
 import RiskManagementPage from './components/RiskManagementPage';
 import RiskManagementPlan from './components/RiskManagementPlan';
 import ComprehensiveRiskPlan from './components/ComprehensiveRiskPlan';
@@ -103,8 +103,8 @@ const AppContent = () => {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/signin" element={<SignIn />} />
         <Route path="/membership" element={<MembershipPlans />} />
-        <Route path="/payment" element={<PaymentFlow />} />
-        <Route path="/questionnaire" element={<Questionnaire />} />
+        <Route path="/payment" element={<ProtectedRoute><PaymentIntegration selectedPlan={{name: 'Professional', price: 99, period: 'month'}} onPaymentComplete={() => navigate('/dashboard')} /></ProtectedRoute>} />
+        {/* <Route path="/questionnaire" element={<Questionnaire />} /> */}
         <Route path="/risk-management" element={<RiskManagementPage />} />
         <Route path="/risk-management-plan" element={<RiskManagementPlan />} />
         <Route path="/comprehensive-risk-plan" element={<ComprehensiveRiskPlan />} />
