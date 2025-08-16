@@ -60,18 +60,29 @@ def create_app(config_object='journal.config.DevelopmentConfig'):
         response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH')
         return response
     
-    # Add method not allowed handler
+    # Handle 405 Method Not Allowed errors
     @app.errorhandler(405)
-    def method_not_allowed(error):
+    def method_not_allowed(e):
         response = jsonify({
-            "error": "Method not allowed",
-            "message": f"The method {request.method} is not allowed for this endpoint",
-            "allowed_methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+            "error": "Method Not Allowed",
+            "message": "The method is not allowed for the requested URL.",
+            "allowed_methods": list(e.valid_methods) if hasattr(e, 'valid_methods') else []
         })
         response.headers.add("Access-Control-Allow-Origin", "*")
         response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With")
         response.headers.add('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE,OPTIONS")
         return response, 405
+
+    # Add a debug route to check registered routes
+    @app.route('/debug/routes')
+    def list_routes():
+        import urllib
+        output = []
+        for rule in app.url_map.iter_rules():
+            methods = ','.join(rule.methods)
+            line = urllib.parse.unquote("{:50s} {:20s} {}".format(rule.endpoint, methods, rule))
+            output.append(line)
+        return '<br>'.join(sorted(output))
 
     # Register blueprints
     app.register_blueprint(trades_bp, url_prefix='/api')
@@ -88,27 +99,9 @@ def create_app(config_object='journal.config.DevelopmentConfig'):
     def serve(path):
         # Skip API routes - let them be handled by blueprints
         if path.startswith('api/'):
-            return jsonify({"error": "API endpoint not found"}), 404
-            
-        if app.static_folder is None:
-            # In production, serve a simple HTML if no static folder
-            if app.config.get('ENV') == 'production':
-                return '''
-                <!DOCTYPE html>
-                <html>
-                <head><title>Trading Journal</title></head>
-                <body>
-                    <div id="root">Loading...</div>
-                    <script>
-                        // Simple client-side routing fallback
-                        if (window.location.pathname.startsWith('/admin')) {
-                            window.location.hash = '#/admin';
-                        }
-                    </script>
-                </body>
-                </html>
-                '''
-            raise RuntimeError("Static folder is not configured.")
+            # Don't interfere with API routes, let Flask handle them
+            from flask import abort
+            abort(404)
         
         # Handle static files
         if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
@@ -134,6 +127,12 @@ def create_app(config_object='journal.config.DevelopmentConfig'):
                             <p>Application is loading...</p>
                         </div>
                     </div>
+                    <script>
+                        // Simple client-side routing fallback
+                        if (window.location.pathname.startsWith('/admin')) {
+                            window.location.hash = '#/admin';
+                        }
+                    </script>
                 </body>
                 </html>
                 '''

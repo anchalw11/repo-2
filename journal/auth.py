@@ -17,7 +17,12 @@ logging.basicConfig(level=logging.INFO)
 def register():
     # Handle CORS preflight request
     if request.method == 'OPTIONS':
-        return '', 200
+        response = jsonify({"status": "ok"})
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With,Accept,Origin")
+        response.headers.add('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE,OPTIONS,PATCH")
+        response.headers.add('Access-Control-Max-Age', "3600")
+        return response, 200
         
     try:
         data = request.get_json()
@@ -75,7 +80,12 @@ def register():
 def login():
     # Handle CORS preflight request
     if request.method == 'OPTIONS':
-        return '', 200
+        response = jsonify({"status": "ok"})
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With,Accept,Origin")
+        response.headers.add('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE,OPTIONS,PATCH")
+        response.headers.add('Access-Control-Max-Age', "3600")
+        return response, 200
         
     data = request.get_json()
     if not data:
@@ -114,7 +124,12 @@ def login():
 def profile():
     # Handle CORS preflight request
     if request.method == 'OPTIONS':
-        return '', 200
+        response = jsonify({"status": "ok"})
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With,Accept,Origin")
+        response.headers.add('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE,OPTIONS,PATCH")
+        response.headers.add('Access-Control-Max-Age', "3600")
+        return response, 200
         
     current_user_id = get_jwt_identity()
     user = User.query.get(current_user_id)
