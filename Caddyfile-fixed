@@ -1,0 +1,36 @@
+traderedgepro.com {
+    # Handle API requests - proxy to Flask backend
+    handle /api/* {
+        reverse_proxy localhost:5000
+    }
+    
+    # Handle debug routes - proxy to Flask backend
+    handle /debug/* {
+        reverse_proxy localhost:5000
+    }
+    
+    # Serve static files for everything else
+    handle {
+        root * /var/www/trading-journal/dist
+        try_files {path} /index.html
+        file_server
+    }
+    
+    # Security headers
+    header {
+        X-Frame-Options SAMEORIGIN
+        X-Content-Type-Options nosniff
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "no-referrer-when-downgrade"
+        Content-Security-Policy "default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://m.stripe.network https://s3.tradingview.com; style-src 'self' 'unsafe-inline' 'unsafe-hashes' https://m.stripe.network; frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://m.stripe.network; connect-src 'self' https://api.stripe.com https://m.stripe.network; img-src 'self' data: https:; font-src 'self' data: https:;"
+    }
+    
+    # Enable compression
+    encode gzip
+    
+    # Logging
+    log {
+        output file /var/log/caddy/access.log
+        format json
+    }
+}

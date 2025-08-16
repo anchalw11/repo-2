@@ -6,7 +6,7 @@ import requests
 import json
 
 def test_auth_endpoints():
-    base_url = "http://zc0gsg4sog8cwcsssggwswck.163.61.31.220.sslip.io"
+    base_url = "https://traderedgepro.com"
     
     print("=== Testing Auth Endpoints ===")
     
