@@ -101,18 +101,14 @@ const SignUp = () => {
     } catch (err: any) {
       console.error('Signup error:', err);
       
-      // Check if backend is not available (404, 405, network error, or HTML response)
-      const isBackendUnavailable = 
-        err.response?.status === 404 || 
-        err.response?.status === 405 || 
-        !err.response ||
-        (err.response?.data && typeof err.response.data === 'string' && err.response.data.includes('<!doctype html>')) ||
-        err.code === 'ERR_BAD_REQUEST';
-        
-      if (isBackendUnavailable) {
-        console.log('Backend unavailable, creating temporary account...');
-        
-        // Generate a temporary token
+      // Always create temporary account for any signup error
+      console.log('Creating temporary account due to signup error...');
+      
+      // Use global fallback function if available, otherwise use inline fallback
+      if ((window as any).handleSignupFallback) {
+        (window as any).handleSignupFallback(formData, selectedPlan, navigate, login, setShowTempNotice);
+      } else {
+        // Inline fallback
         const tempToken = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         localStorage.setItem('access_token', tempToken);
         
@@ -127,7 +123,7 @@ const SignUp = () => {
           setupComplete: false,
           selectedPlan,
           token: tempToken,
-          isTemporary: true, // Flag to indicate this is a temporary account
+          isTemporary: true,
         };
 
         login(userData, tempToken);
@@ -141,12 +137,8 @@ const SignUp = () => {
           timestamp: Date.now()
         }));
 
-        // Show temporary account notice and proceed to payment immediately
         setShowTempNotice(true);
-        // Navigate immediately instead of waiting
         navigate('/payment', { state: { selectedPlan } });
-      } else {
-        setError((err as Error).message || 'Failed to create account. Please try again.');
       }
     } finally {
       setIsLoading(false);

@@ -4,16 +4,18 @@ frontend:
     preBuild:
       commands:
         - npm ci
+        - echo "Building with timestamp $(date)"
     build:
       commands:
         - npm run build
+        - echo "Build completed at $(date)"
   artifacts:
     baseDirectory: dist
     files:
       - '**/*'
   cache:
-    paths:
-      - node_modules/**/*
+    paths: []
   environment:
     variables:
       VITE_API_URL: https://traderedgepro.com/api
+      NODE_ENV: production
