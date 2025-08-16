@@ -2,7 +2,12 @@
 const getApiBaseUrl = () => {
   // Check if we're in production
   if (import.meta.env.PROD) {
-    // In production, use the same domain
+    // Check if we're on Amplify
+    if (window.location.hostname.includes('amplifyapp.com')) {
+      // Point to your production Flask backend
+      return 'https://traderedgepro.com/api';
+    }
+    // In production on your own domain
     return '/api';
   }
   
