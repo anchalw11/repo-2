@@ -124,16 +124,18 @@ def create_app(config_object='journal.config.DevelopmentConfig'):
                     <title>Trading Journal</title>
                     <meta charset="utf-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1">
+                    <style>
+                        .loading-container { text-align: center; padding: 50px; }
+                    </style>
                 </head>
                 <body>
                     <div id="root">
-                        <div style="text-align: center; padding: 50px;">
+                        <div class="loading-container">
                             <h1>Trading Journal</h1>
                             <p>Application is loading...</p>
                         </div>
                     </div>
                     <script>
-                        // Simple client-side routing fallback
                         if (window.location.pathname.startsWith('/admin')) {
                             window.location.hash = '#/admin';
                         }
