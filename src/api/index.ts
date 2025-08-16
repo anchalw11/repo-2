@@ -1,35 +1,76 @@
 import axios from 'axios';
 import { API_BASE_URL, API_CONFIG } from './config';
 
+// Create axios instance with production configuration
 const api = axios.create({
+  ...API_CONFIG,
+  // Ensure we're using the correct base URL
   baseURL: API_BASE_URL,
-  timeout: API_CONFIG.timeout,
-  headers: API_CONFIG.headers,
+  // Add response type
+  responseType: 'json',
 });
 
-// Add a response interceptor
+// Add a response interceptor for global error handling
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Log successful requests in development
+    if (import.meta.env.DEV) {
+      console.log(`[API] ${response.config.method?.toUpperCase()} ${response.config.url}`, {
+        status: response.status,
+        data: response.data,
+        config: response.config
+      });
+    }
+    return response;
+  },
   (error) => {
-    if (error.response && error.response.status === 401) {
-      // Dispatch a custom event to notify the app of session invalidation
+    // Log error details
+    console.error('[API Error]', {
+      url: error.config?.url,
+      method: error.config?.method,
+      status: error.response?.status,
+      data: error.response?.data,
+      config: error.config
+    });
+
+    // Handle 401 Unauthorized
+    if (error.response?.status === 401) {
       window.dispatchEvent(new CustomEvent('session-invalid'));
     }
+    
+    // Handle network errors
+    if (!error.response) {
+      console.error('Network Error:', error.message);
+    }
+    
     return Promise.reject(error);
   }
 );
 
-// Add request interceptor to include auth token
+// Add request interceptor to include auth token and add request logging
 api.interceptors.request.use(
   (config) => {
+    // Add auth token if available
     const token = localStorage.getItem('access_token') || localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Log requests in development
+    if (import.meta.env.DEV) {
+      console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`, {
+        data: config.data,
+        params: config.params,
+        headers: config.headers
+      });
+    }
+    
     return config;
   },
   (error) => {
+    console.error('[API Request Error]', error);
     return Promise.reject(error);
   }
 );
+
 export default api;
