@@ -101,8 +101,15 @@ const SignUp = () => {
     } catch (err: any) {
       console.error('Signup error:', err);
       
-      // If backend is not available (404, 405, network error), create temporary account
-      if (err.response?.status === 404 || err.response?.status === 405 || !err.response) {
+      // Check if backend is not available (404, 405, network error, or HTML response)
+      const isBackendUnavailable = 
+        err.response?.status === 404 || 
+        err.response?.status === 405 || 
+        !err.response ||
+        (err.response?.data && typeof err.response.data === 'string' && err.response.data.includes('<!doctype html>')) ||
+        err.code === 'ERR_BAD_REQUEST';
+        
+      if (isBackendUnavailable) {
         console.log('Backend unavailable, creating temporary account...');
         
         // Generate a temporary token
@@ -134,11 +141,10 @@ const SignUp = () => {
           timestamp: Date.now()
         }));
 
-        // Show temporary account notice and proceed to payment
+        // Show temporary account notice and proceed to payment immediately
         setShowTempNotice(true);
-        setTimeout(() => {
-          navigate('/payment', { state: { selectedPlan } });
-        }, 2000);
+        // Navigate immediately instead of waiting
+        navigate('/payment', { state: { selectedPlan } });
       } else {
         setError((err as Error).message || 'Failed to create account. Please try again.');
       }
