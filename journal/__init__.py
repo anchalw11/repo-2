@@ -84,15 +84,20 @@ def create_app(config_object='journal.config.DevelopmentConfig'):
             output.append(line)
         return '<br>'.join(sorted(output))
 
-    # Register blueprints
+    # Register blueprints - AUTH FIRST to ensure it's properly registered
+    app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(admin_auth_bp, url_prefix='/api/admin')
     app.register_blueprint(trades_bp, url_prefix='/api')
     app.register_blueprint(risk_plan_bp, url_prefix='/api')
-    app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(user_bp, url_prefix='/api')
-    app.register_blueprint(admin_auth_bp, url_prefix='/api/admin')
     app.register_blueprint(telegram_bp, url_prefix='/api/telegram')
     app.register_blueprint(plan_generation_bp, url_prefix='/api')
     app.register_blueprint(account_bp, url_prefix='/api/accounts')
+    
+    # Log registered routes for debugging
+    print("Registered routes:")
+    for rule in app.url_map.iter_rules():
+        print(f"  {rule.endpoint}: {rule.rule} [{','.join(rule.methods)}]")
 
     @app.route('/', defaults={'path': ''})
     @app.route('/<path:path>')
