@@ -42,12 +42,22 @@ const PaymentFlow = () => {
 
   // Navigate to questionnaire only when payment is complete
   React.useEffect(() => {
+    // Check if user is authenticated (allow temporary accounts)
+    if (!user?.isAuthenticated) {
+      navigate('/signin');
+      return;
+    }
+    
+    // If this is a temporary account, show a notice but allow payment
+    if (user?.isTemporary) {
+      console.log('Processing payment for temporary account');
+    }
     if (paymentComplete) {
       setTimeout(() => {
         navigate('/questionnaire');
       }, 3000); // 3-second delay to show the message
     }
-  }, [paymentComplete, navigate]);
+  }, [paymentComplete, navigate, user]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">

@@ -424,7 +424,7 @@ const LandingPage = () => {
               <h4 className="font-semibold text-white mb-4">Support</h4>
               <ul className="space-y-3 text-gray-400">
                 <li><Link to="/faq" className="hover:text-blue-400 transition-colors">FAQ</Link></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Contact Support</a></li>
+                <li><Link to="/customer-service" className="hover:text-blue-400 transition-colors">Contact Support</Link></li>
                 <li><a href="#" className="hover:text-blue-400 transition-colors">Privacy Policy</a></li>
                 <li><Link to="/terms" className="hover:text-blue-400 transition-colors">Terms of Service</Link></li>
               </ul>

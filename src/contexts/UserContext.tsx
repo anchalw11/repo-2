@@ -2,16 +2,17 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import api from '../api';
 
 export interface User {
-  id: string;
-  name: string;
-  email: string;
-  membershipTier: 'basic' | 'pro' | 'professional' | 'institutional' | 'elite' | 'enterprise' | 'kickstarter' | 'free';
-  accountType: 'personal' | 'funded' | 'prop';
-  riskTolerance: 'conservative' | 'moderate' | 'aggressive';
+  id?: string;
+  name?: string;
+  email?: string;
+  membershipTier?: string;
+  accountType?: 'personal' | 'business';
+  riskTolerance?: 'conservative' | 'moderate' | 'aggressive';
   isAuthenticated: boolean;
-  setupComplete: boolean;
-  journalLink?: string;
+  setupComplete?: boolean;
+  selectedPlan?: any;
   token?: string;
+  isTemporary?: boolean;
   tradingData?: {
     propFirm: string;
     accountType: string;

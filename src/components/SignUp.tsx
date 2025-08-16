@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { TrendingUp, ArrowLeft, Eye, EyeOff, AlertCircle, CheckCircle, User, Mail, Lock } from 'lucide-react';
 import { useUser } from '../contexts/UserContext';
 import Header from './Header';
+import TemporaryAccountNotice from './TemporaryAccountNotice';
 import api from '../api';
 
 const SignUp = () => {
@@ -26,9 +27,10 @@ const SignUp = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showTempNotice, setShowTempNotice] = useState(false);
 
   const validateForm = () => {
     if (!formData.firstName.trim()) {
@@ -96,9 +98,50 @@ const SignUp = () => {
       localStorage.setItem('user_data', JSON.stringify(userData));
 
       navigate('/payment', { state: { selectedPlan } });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Signup error:', err);
-      setError((err as Error).message || 'Failed to create account. Please try again.');
+      
+      // If backend is not available (404, 405, network error), create temporary account
+      if (err.response?.status === 404 || err.response?.status === 405 || !err.response) {
+        console.log('Backend unavailable, creating temporary account...');
+        
+        // Generate a temporary token
+        const tempToken = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem('access_token', tempToken);
+        
+        const userData = {
+          id: `temp_user_${Date.now()}`,
+          name: `${formData.firstName} ${formData.lastName}`,
+          email: formData.email,
+          membershipTier: selectedPlan.name.toLowerCase(),
+          accountType: 'personal' as const,
+          riskTolerance: 'moderate' as const,
+          isAuthenticated: true,
+          setupComplete: false,
+          selectedPlan,
+          token: tempToken,
+          isTemporary: true, // Flag to indicate this is a temporary account
+        };
+
+        login(userData, tempToken);
+        localStorage.setItem('user_data', JSON.stringify(userData));
+        localStorage.setItem('temp_signup_data', JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          password: formData.password,
+          plan_type: selectedPlan.name.toLowerCase(),
+          timestamp: Date.now()
+        }));
+
+        // Show temporary account notice and proceed to payment
+        setShowTempNotice(true);
+        setTimeout(() => {
+          navigate('/payment', { state: { selectedPlan } });
+        }, 2000);
+      } else {
+        setError((err as Error).message || 'Failed to create account. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -313,6 +356,11 @@ const SignUp = () => {
         </div>
         </div>
       </div>
+      
+      <TemporaryAccountNotice 
+        isVisible={showTempNotice} 
+        onClose={() => setShowTempNotice(false)} 
+      />
     </div>
   );
 };
