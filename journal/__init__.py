@@ -60,18 +60,18 @@ def create_app(config_object='journal.config.DevelopmentConfig'):
         response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH')
         return response
     
-    # Handle 405 Method Not Allowed errors
-    @app.errorhandler(405)
-    def method_not_allowed(e):
-        response = jsonify({
-            "error": "Method Not Allowed",
-            "message": "The method is not allowed for the requested URL.",
-            "allowed_methods": list(e.valid_methods) if hasattr(e, 'valid_methods') else []
-        })
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With")
-        response.headers.add('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE,OPTIONS")
-        return response, 405
+    # Handle 405 Method Not Allowed errors - REMOVE THIS TO AVOID CONFLICTS
+    # @app.errorhandler(405)
+    # def method_not_allowed(e):
+    #     response = jsonify({
+    #         "error": "Method Not Allowed",
+    #         "message": "The method is not allowed for the requested URL.",
+    #         "allowed_methods": list(e.valid_methods) if hasattr(e, 'valid_methods') else []
+    #     })
+    #     response.headers.add("Access-Control-Allow-Origin", "*")
+    #     response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With")
+    #     response.headers.add('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE,OPTIONS")
+    #     return response, 405
 
     # Add a debug route to check registered routes
     @app.route('/debug/routes')
@@ -99,12 +99,13 @@ def create_app(config_object='journal.config.DevelopmentConfig'):
     for rule in app.url_map.iter_rules():
         print(f"  {rule.endpoint}: {rule.rule} [{','.join(rule.methods)}]")
 
-    @app.route('/', defaults={'path': ''})
-    @app.route('/<path:path>')
+    # Move catch-all route to the very end, after all blueprints
+    @app.route('/', defaults={'path': ''}, methods=['GET'])
+    @app.route('/<path:path>', methods=['GET'])
     def serve(path):
-        # Skip API routes - let them be handled by blueprints
-        if path.startswith('api/'):
-            # Don't interfere with API routes, let Flask handle them
+        # Only handle non-API routes for static files and SPA routing
+        if path.startswith('api'):
+            # Let Flask handle API routes through blueprints
             from flask import abort
             abort(404)
         

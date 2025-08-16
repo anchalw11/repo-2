@@ -24,8 +24,12 @@ def test_auth():
         return response, 200
     return jsonify({"message": "Auth blueprint is working", "method": request.method}), 200
 
-@auth_bp.route('/register', methods=['POST', 'OPTIONS'])
+@auth_bp.route('/register', methods=['POST', 'OPTIONS'], strict_slashes=False)
 def register():
+    print(f"Register route called with method: {request.method}")
+    print(f"Request URL: {request.url}")
+    print(f"Request path: {request.path}")
+    
     # Handle CORS preflight request
     if request.method == 'OPTIONS':
         response = jsonify({"status": "ok"})
@@ -34,6 +38,10 @@ def register():
         response.headers.add('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE,OPTIONS,PATCH")
         response.headers.add('Access-Control-Max-Age', "3600")
         return response, 200
+    
+    # Ensure it's a POST request
+    if request.method != 'POST':
+        return jsonify({"error": "Method not allowed", "allowed_methods": ["POST", "OPTIONS"]}), 405
         
     try:
         data = request.get_json()
