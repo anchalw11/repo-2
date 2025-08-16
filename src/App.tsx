@@ -151,7 +151,7 @@ const AppContent = () => {
           path="/customer-service/dashboard"
           element={
             <ProtectedRoute>
-              <EnhancedCustomerServiceDashboard onLogout={handleLogout} />
+              <EnhancedCustomerServiceDashboard onLogout={handleAdminLogout} />
             </ProtectedRoute>
           }
         />

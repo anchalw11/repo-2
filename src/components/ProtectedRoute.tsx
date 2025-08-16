@@ -9,6 +9,7 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { admin } = useAdmin();
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const isCustomerServiceRoute = location.pathname.startsWith('/customer-service');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -46,7 +47,7 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
       }
     };
 
-    if (!isAdminRoute) {
+    if (!isAdminRoute && !isCustomerServiceRoute) {
       fetchUser();
     } else {
       setIsLoading(false);
@@ -57,8 +58,19 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
     return <div>Loading...</div>; // Or a spinner component
   }
 
-  if (isAdminRoute) {
+  if (isAdminRoute || isCustomerServiceRoute) {
     if (!admin || !admin.isAuthenticated) {
+      // Redirect to appropriate login page based on route
+      const redirectTo = isCustomerServiceRoute ? "/customer-service" : "/admin";
+      return <Navigate to={redirectTo} state={{ from: location }} replace />;
+    }
+    
+    // Check if user type matches the route
+    const userType = localStorage.getItem('admin_user_type');
+    if (isCustomerServiceRoute && userType !== 'customer-service') {
+      return <Navigate to="/customer-service" state={{ from: location }} replace />;
+    }
+    if (isAdminRoute && userType !== 'admin') {
       return <Navigate to="/admin" state={{ from: location }} replace />;
     }
   } else {

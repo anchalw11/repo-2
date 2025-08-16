@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   MessageSquare, 
   Users, 
@@ -61,9 +61,10 @@ interface SystemMetrics {
   uptime: string;
 }
 
-const EnhancedCustomerServiceDashboard: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [mpin, setMpin] = useState('');
+const EnhancedCustomerServiceDashboard = ({ onLogout }: { onLogout?: () => void }) => {
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [refreshing, setRefreshing] = useState(false);
+  const [dataInitialized, setDataInitialized] = useState(false);
   const [error, setError] = useState('');
   const [activePage, setActivePage] = useState('dashboard');
   const [liveChats, setLiveChats] = useState<LiveChat[]>([]);
@@ -83,6 +84,16 @@ const EnhancedCustomerServiceDashboard: React.FC = () => {
     responseTime: 1.2,
     uptime: '7d 14h 32m'
   });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [mpin, setMpin] = useState('');
+
+  // Load data on component mount (only once)
+  useEffect(() => {
+    if (!dataInitialized) {
+      loadMockData();
+      setDataInitialized(true);
+    }
+  }, [dataInitialized]);
 
   // Check authentication on mount
   useEffect(() => {
@@ -106,6 +117,14 @@ const EnhancedCustomerServiceDashboard: React.FC = () => {
 
     window.addEventListener('newChatRequest', handleNewChat as EventListener);
     return () => window.removeEventListener('newChatRequest', handleNewChat as EventListener);
+  }, []);
+
+  // Update time every 5 minutes to reduce re-renders
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 300000);
+    return () => clearInterval(timer);
   }, []);
 
   // Update system metrics

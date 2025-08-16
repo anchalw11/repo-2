@@ -29,20 +29,49 @@ def create_app(config_object='journal.config.DevelopmentConfig'):
     
     print(f"Database URL: {db_url}")
 
-    # Initialize extensions
+    # Initialize extensions with comprehensive CORS
     db.init_app(app)
     jwt = JWTManager(app)
-    CORS(app)
+    CORS(app, 
+         origins=["*"], 
+         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+         allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+         supports_credentials=True,
+         expose_headers=["Content-Type", "Authorization"],
+         max_age=3600)
     socketio.init_app(app, cors_allowed_origins="*")
 
+    # Add comprehensive CORS preflight handler for all routes
+    @app.before_request
+    def handle_preflight():
+        if request.method == "OPTIONS":
+            response = jsonify({"status": "ok"})
+            response.headers.add("Access-Control-Allow-Origin", "*")
+            response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With,Accept,Origin")
+            response.headers.add('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE,OPTIONS,PATCH")
+            response.headers.add('Access-Control-Max-Age', "3600")
+            return response, 200
+    
+    # Add after_request handler for all responses
+    @app.after_request
+    def after_request(response):
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,Accept,Origin')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH')
+        return response
+    
     # Add method not allowed handler
     @app.errorhandler(405)
     def method_not_allowed(error):
-        return jsonify({
+        response = jsonify({
             "error": "Method not allowed",
             "message": f"The method {request.method} is not allowed for this endpoint",
-            "allowed_methods": error.description if hasattr(error, 'description') else []
-        }), 405
+            "allowed_methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        })
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With")
+        response.headers.add('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE,OPTIONS")
+        return response, 405
 
     # Register blueprints
     app.register_blueprint(trades_bp, url_prefix='/api')

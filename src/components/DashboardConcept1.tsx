@@ -62,6 +62,7 @@ const DashboardConcept1 = ({ onLogout }: { onLogout: () => void }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [dataInitialized, setDataInitialized] = useState(false);
   const [forexNews, setForexNews] = useState<ForexFactoryEvent[]>([]);
   const [isLoadingNews, setIsLoadingNews] = useState(false);
   const [selectedNewsDate, setSelectedNewsDate] = useState(new Date());
@@ -80,17 +81,17 @@ const DashboardConcept1 = ({ onLogout }: { onLogout: () => void }) => {
     let isMounted = true;
     
     const initializeDashboardData = async () => {
-      if (user?.email && !dashboardData && !isLoadingData) { // Only fetch if we don't have data and not already loading
+      if (user?.email && !dataInitialized) {
         try {
           setIsLoadingData(true);
           const response = await api.get(`/dashboard-data/${encodeURIComponent(user.email)}`);
           if (isMounted) {
             setDashboardData(response.data);
+            setDataInitialized(true);
           }
         } catch (error) {
           console.error('Error initializing dashboard data:', error);
           if (isMounted) {
-            // Set default data to prevent infinite loading
             setDashboardData({
               userProfile: {
                 propFirm: 'Not Set',
@@ -109,6 +110,7 @@ const DashboardConcept1 = ({ onLogout }: { onLogout: () => void }) => {
                 totalPnL: 0
               }
             });
+            setDataInitialized(true);
           }
         } finally {
           if (isMounted) {
@@ -123,13 +125,13 @@ const DashboardConcept1 = ({ onLogout }: { onLogout: () => void }) => {
     return () => {
       isMounted = false;
     };
-  }, [user?.email]); // Removed dashboardData dependency to prevent infinite loop
+  }, [user?.email, dataInitialized]);
 
-  // Update current time every 5 minutes to reduce flickering
+  // Update current time every 10 minutes to reduce flickering
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
-    }, 300000); // Update every 5 minutes instead of every minute
+    }, 600000); // Update every 10 minutes
     return () => clearInterval(timer);
   }, []);
 

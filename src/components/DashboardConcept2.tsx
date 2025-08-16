@@ -62,6 +62,7 @@ const DashboardConcept2 = ({ onLogout }: { onLogout: () => void }) => {
   const [marketStatus, setMarketStatus] = useState<any>(null);
   const [selectedTimezone, setSelectedTimezone] = useState('UTC');
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [dataInitialized, setDataInitialized] = useState(false);
   const [forexNews, setForexNews] = useState<ForexFactoryEvent[]>([]);
   const [isLoadingNews, setIsLoadingNews] = useState(false);
   const [selectedNewsDate, setSelectedNewsDate] = useState(new Date());
@@ -75,11 +76,11 @@ const DashboardConcept2 = ({ onLogout }: { onLogout: () => void }) => {
     }
   }, [user]);
 
-  // Update current time every second
+  // Update time every 10 minutes to reduce flickering
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
-    }, 1000);
+    }, 600000);
     return () => clearInterval(timer);
   }, []);
 

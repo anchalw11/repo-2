@@ -21,7 +21,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
 
   const validateToken = async (token: string) => {
     try {
-      // For MPIN authentication, we don't need backend validation
+      // For MPIN authentication, always return true (handled in useEffect)
       if (token === 'mpin_authenticated_token') {
         return true;
       }
@@ -52,7 +52,30 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     const checkToken = async () => {
       const token = localStorage.getItem('admin_token');
       const username = localStorage.getItem('admin_username');
+      const mpinAuth = localStorage.getItem('admin_mpin_authenticated');
+      const loginTime = localStorage.getItem('admin_login_time');
+      
       if (token && username) {
+        // For MPIN authentication, check if it's still valid (24 hours)
+        if (token === 'mpin_authenticated_token' && mpinAuth === 'true') {
+          if (loginTime) {
+            const loginDate = new Date(loginTime);
+            const now = new Date();
+            const hoursSinceLogin = (now.getTime() - loginDate.getTime()) / (1000 * 60 * 60);
+            
+            // Keep MPIN session active for 24 hours
+            if (hoursSinceLogin < 24) {
+              setAdmin({
+                username: username,
+                isAuthenticated: true,
+                loginTime: loginDate
+              });
+              return;
+            }
+          }
+        }
+        
+        // For regular tokens, validate with backend
         const isValid = await validateToken(token);
         if (isValid) {
           setAdmin({
@@ -60,7 +83,10 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
             isAuthenticated: true,
           });
         } else {
-          logout();
+          // Only logout if it's not an MPIN token
+          if (token !== 'mpin_authenticated_token') {
+            logout();
+          }
         }
       }
     };
@@ -96,14 +122,15 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
 
   const loginWithMpin = async (mpin: string): Promise<boolean> => {
     try {
-      // Admin MPIN is 180623
-      if (mpin === '180623') {
-        const adminUsername = 'admin';
+      // Admin MPIN is 180623, Customer Service MPIN is 123456
+      if (mpin === '180623' || mpin === '123456') {
+        const adminUsername = mpin === '180623' ? 'admin' : 'customer-service';
         const loginTime = new Date().toISOString();
         localStorage.setItem('admin_token', 'mpin_authenticated_token');
         localStorage.setItem('admin_username', adminUsername);
         localStorage.setItem('admin_login_time', loginTime);
         localStorage.setItem('admin_mpin_authenticated', 'true');
+        localStorage.setItem('admin_user_type', mpin === '180623' ? 'admin' : 'customer-service');
         setAdmin({
           username: adminUsername,
           isAuthenticated: true,
@@ -123,6 +150,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('admin_username');
     localStorage.removeItem('admin_login_time');
     localStorage.removeItem('admin_mpin_authenticated');
+    localStorage.removeItem('admin_user_type');
     setAdmin(null);
   };
 
