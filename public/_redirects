@@ -1,10 +1,22 @@
-# SPA routing redirects for all platforms
-/*    /index.html   200
+# AWS Amplify SPA routing - order matters!
+/signup    /index.html   200
+/signin    /index.html   200
+/dashboard    /index.html   200
+/dashboard/*    /index.html   200
+/membership    /index.html   200
+/payment    /index.html   200
+/setup/*    /index.html   200
+/admin/*    /index.html   200
+/risk-management*    /index.html   200
+/upload-screenshot    /index.html   200
+/features    /index.html   200
+/about    /index.html   200
+/terms*    /index.html   200
+/privacy-policy    /index.html   200
+/faq    /index.html   200
+/trade-mentor/*    /index.html   200
+/customer-service*    /index.html   200
+/affiliate-links    /index.html   200
 
-# Specific routes for better compatibility
-/signup   /index.html   200
-/signin   /index.html   200
-/dashboard   /index.html   200
-/dashboard/*   /index.html   200
-/membership   /index.html   200
-/payment   /index.html   200
+# Catch-all must be last
+/*    /index.html   200
