@@ -39,24 +39,39 @@ def create_app(config_object='journal.config.DevelopmentConfig'):
     db.init_app(app)
     jwt = JWTManager(app)
     
-    # Configure CORS
+    # Configure CORS with comprehensive settings
     allowed_origins = [
-        "https://main.d2rt49p7nhfpv7.amplifyapp.com",  # Your Amplify domain
-        "http://localhost:3000"  # For local development
+        "https://main.djqiswxonnw5x.amplifyapp.com",  # Current Amplify domain
+        "https://traderedgepro.com",                  # Production domain
+        "http://localhost:3000",                      # Local development
+        "http://localhost:5173"                       # Vite dev server
     ]
     
+    # Enable CORS for all routes under /api
     CORS(app, 
          resources={
              r"/api/*": {
                  "origins": allowed_origins,
-                 "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-                 "allow_headers": ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+                 "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"],
+                 "allow_headers": ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin", "X-Auth-Token"],
                  "supports_credentials": True,
-                 "expose_headers": ["Content-Type", "Authorization"],
-                 "max_age": 3600
+                 "expose_headers": ["Content-Type", "Authorization", "X-Total-Count"],
+                 "max_age": 86400  # 24 hours
              }
-         })
-    socketio.init_app(app, cors_allowed_origins="*")
+         },
+         # Global CORS settings (applies to all routes not matched above)
+         allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+         methods=["GET", "HEAD", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"],
+         supports_credentials=True,
+         expose_headers=["Content-Type", "Authorization", "X-Total-Count"]
+    )
+    
+    # Initialize Socket.IO with CORS
+    socketio.init_app(app, 
+                     cors_allowed_origins=allowed_origins,
+                     async_mode='eventlet',
+                     logger=True,
+                     engineio_logger=True)
 
     # Add comprehensive CORS preflight handler for all routes
     @app.after_request
@@ -64,27 +79,33 @@ def create_app(config_object='journal.config.DevelopmentConfig'):
         # Get the origin from the request
         origin = request.headers.get('Origin', '')
         
-        # Define allowed origins
+        # Define allowed origins - must match the CORS configuration above
         allowed_origins = [
-            'https://main.d2rt49p7nhfpv7.amplifyapp.com',  # Your Amplify domain
-            'https://traderedgepro.com',                   # Production domain
-            'http://localhost:3000',                       # Local development
-            'http://localhost:5173'                        # Vite dev server
+            'https://main.djqiswxonnw5x.amplifyapp.com',  # Current Amplify domain
+            'https://traderedgepro.com',                  # Production domain
+            'http://localhost:3000',                      # Local development
+            'http://localhost:5173'                       # Vite dev server
         ]
+        
+        # Always set Vary header to prevent cache issues
+        response.vary = 'Origin'
         
         # Set CORS headers if origin is allowed
         if origin in allowed_origins:
-            response.headers.add('Access-Control-Allow-Origin', origin)
-            response.headers.add('Access-Control-Allow-Credentials', 'true')
-            response.headers.add('Access-Control-Allow-Headers', 
-                              'Content-Type, Authorization, X-Requested-With, Accept, Origin')
-            response.headers.add('Access-Control-Allow-Methods', 
-                              'GET, POST, PUT, DELETE, OPTIONS, PATCH')
-            response.headers.add('Access-Control-Max-Age', '3600')
+            response.headers['Access-Control-Allow-Origin'] = origin
+            response.headers['Access-Control-Allow-Credentials'] = 'true'
+            
+            # Only add these headers for actual requests, not OPTIONS
+            if request.method != 'OPTIONS':
+                response.headers['Access-Control-Expose-Headers'] = 'Content-Type, Authorization, X-Total-Count'
         
         # Handle preflight requests
         if request.method == 'OPTIONS':
-            response.status_code = 200
+            if 'Access-Control-Request-Method' in request.headers:
+                response.headers['Access-Control-Allow-Methods'] = 'GET, HEAD, POST, OPTIONS, PUT, PATCH, DELETE'
+                response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Auth-Token'
+                response.headers['Access-Control-Max-Age'] = '86400'
+                response.status_code = 200
             
         return response
     

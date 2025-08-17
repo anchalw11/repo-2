@@ -1,13 +1,17 @@
-# AWS Amplify SPA routing - order matters!
-/signup    /index.html   200
-/signin    /index.html   200
-/dashboard    /index.html   200
-/dashboard/*    /index.html   200
-/membership    /index.html   200
-/payment    /index.html   200
-/setup/*    /index.html   200
-/admin/*    /index.html   200
-/risk-management*    /index.html   200
+# AWS Amplify SPA routing
+# Catch-all for SPA routing
+</^[^.]+$|\\.(?!(css|gif|ico|jpg|js|png|txt|svg|woff|ttf|map|json)$)([^.]+$)/> /index.html 200
+
+# Specific routes for better caching
+/signup /index.html 200
+/signin /index.html 200
+/dashboard /index.html 200
+/dashboard/* /index.html 200
+/membership /index.html 200
+/payment /index.html 200
+/setup/* /index.html 200
+/admin/* /index.html 200
+/risk-management* /index.html 200
 /upload-screenshot    /index.html   200
 /features    /index.html   200
 /about    /index.html   200
