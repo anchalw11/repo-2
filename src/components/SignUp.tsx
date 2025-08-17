@@ -71,7 +71,7 @@ const SignUp = () => {
     setIsLoading(true);
 
     try {
-      // Try to register with backend API
+      // Register with backend API
       const response = await api.post('/auth/register', {
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -80,63 +80,57 @@ const SignUp = () => {
         plan_type: selectedPlan.name.toLowerCase(),
       });
 
-      const { access_token } = response.data;
-      localStorage.setItem('access_token', access_token);
+      // Check if we got a successful response
+      if (response.status === 200 || response.status === 201) {
+        const { access_token, user } = response.data;
+        
+        if (access_token) {
+          localStorage.setItem('access_token', access_token);
 
-      const userData = {
-        id: `user_${Date.now()}`,
-        name: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email,
-        membershipTier: selectedPlan.name.toLowerCase(),
-        accountType: 'personal' as const,
-        riskTolerance: 'moderate' as const,
-        isAuthenticated: true,
-        setupComplete: false,
-        selectedPlan,
-        token: access_token,
-      };
+          const userData = {
+            id: user?.id || `user_${Date.now()}`,
+            name: `${formData.firstName} ${formData.lastName}`,
+            email: formData.email,
+            membershipTier: selectedPlan.name.toLowerCase(),
+            accountType: 'personal' as const,
+            riskTolerance: 'moderate' as const,
+            isAuthenticated: true,
+            setupComplete: false,
+            selectedPlan,
+            token: access_token,
+          };
 
-      login(userData, access_token);
-      localStorage.setItem('user_data', JSON.stringify(userData));
+          login(userData, access_token);
+          localStorage.setItem('user_data', JSON.stringify(userData));
 
-      // Successfully registered, redirect to payment
-      navigate('/payment', { state: { selectedPlan } });
+          // Successfully registered, redirect to payment
+          navigate('/payment', { state: { selectedPlan } });
+        } else {
+          throw new Error('No access token received from server');
+        }
+      } else {
+        throw new Error(`Registration failed with status: ${response.status}`);
+      }
     } catch (err: any) {
-      console.error('Backend signup failed, using fallback:', err);
+      console.error('Registration failed:', err);
       
-      // Create temporary account for immediate access to payment flow
-      const tempToken = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      localStorage.setItem('access_token', tempToken);
-      
-      const userData = {
-        id: `temp_user_${Date.now()}`,
-        name: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email,
-        membershipTier: selectedPlan.name.toLowerCase(),
-        accountType: 'personal' as const,
-        riskTolerance: 'moderate' as const,
-        isAuthenticated: true,
-        setupComplete: false,
-        selectedPlan,
-        token: tempToken,
-        isTemporary: true,
-      };
-
-      login(userData, tempToken);
-      localStorage.setItem('user_data', JSON.stringify(userData));
-      
-      // Store signup data for later backend sync
-      localStorage.setItem('pending_signup_data', JSON.stringify({
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        password: formData.password,
-        plan_type: selectedPlan.name.toLowerCase(),
-        timestamp: Date.now()
-      }));
-
-      // Redirect to payment page immediately
-      navigate('/payment', { state: { selectedPlan } });
+      // Handle specific error messages
+      if (err.response?.status === 400) {
+        const errorMsg = err.response.data?.msg || err.response.data?.message || 'Registration failed';
+        if (errorMsg.includes('already registered') || errorMsg.includes('Email already')) {
+          setError('This email is already registered. Please use a different email or try signing in.');
+        } else {
+          setError(errorMsg);
+        }
+      } else if (err.response?.status === 500) {
+        setError('Server error occurred. Please try again later.');
+      } else if (err.response?.status === 503) {
+        setError('Service temporarily unavailable. Please try again in a few minutes.');
+      } else if (!err.response) {
+        setError('Unable to connect to server. Please check your internet connection and try again.');
+      } else {
+        setError('Registration failed. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
