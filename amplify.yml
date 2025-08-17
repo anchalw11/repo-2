@@ -14,8 +14,6 @@ frontend:
   cache:
     paths:
       - node_modules/**/*
-  environmentVariables:
-    VITE_API_URL: 'https://traderedgepro.com/api'
   customRules:
     - source: "/<*>"
       target: "/index.html"
