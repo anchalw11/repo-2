@@ -43,7 +43,11 @@ export const API_CONFIG = {
     'Content-Type': 'application/json',
     'X-Requested-With': 'XMLHttpRequest'
   },
-  withCredentials: true // Include cookies in cross-origin requests
+  withCredentials: false, // Disable for cross-origin requests to prevent CORS issues
+  maxRedirects: 0, // Prevent automatic redirects that convert POST to GET
+  validateStatus: function (status: number) {
+    return status >= 200 && status < 300; // Only accept success status codes
+  }
 };
 
 // Environment-specific settings
