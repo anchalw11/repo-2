@@ -1,2 +1,10 @@
-# Amplify SPA routing redirects
+# SPA routing redirects for all platforms
 /*    /index.html   200
+
+# Specific routes for better compatibility
+/signup   /index.html   200
+/signin   /index.html   200
+/dashboard   /index.html   200
+/dashboard/*   /index.html   200
+/membership   /index.html   200
+/payment   /index.html   200
