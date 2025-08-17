@@ -14,7 +14,7 @@ const getApiBaseUrl = () => {
 
   // Production: prefer explicit backend URL from env
   const fromEnv = import.meta.env.VITE_API_URL as string | undefined;
-  const apiUrl = fromEnv && fromEnv.trim().length > 0 ? fromEnv : '/api';
+  const apiUrl = 'https://traderedgepro.com/api';
 
   console.log('API Base URL (prod):', apiUrl, {
     fromEnv,
