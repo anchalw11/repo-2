@@ -47,7 +47,7 @@ def create_app(config_object='journal.config.DevelopmentConfig'):
         "http://localhost:5173"                       # Vite dev server
     ]
     
-    # Enable CORS for all routes under /api
+    # Enable CORS for all routes
     CORS(app, 
          resources={
              r"/api/*": {
@@ -57,19 +57,27 @@ def create_app(config_object='journal.config.DevelopmentConfig'):
                  "supports_credentials": True,
                  "expose_headers": ["Content-Type", "Authorization", "X-Total-Count"],
                  "max_age": 86400  # 24 hours
+             },
+             # Explicitly include auth routes
+             r"/api/auth/*": {
+                 "origins": allowed_origins,
+                 "methods": ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
+                 "allow_headers": ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+                 "supports_credentials": True,
+                 "expose_headers": ["Content-Type", "Authorization"]
              }
          },
          # Global CORS settings (applies to all routes not matched above)
-         allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+         allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin", "X-Auth-Token"],
          methods=["GET", "HEAD", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"],
          supports_credentials=True,
          expose_headers=["Content-Type", "Authorization", "X-Total-Count"]
     )
     
-    # Initialize Socket.IO with CORS
+    # Initialize Socket.IO with CORS (using threading mode for development)
     socketio.init_app(app, 
                      cors_allowed_origins=allowed_origins,
-                     async_mode='eventlet',
+                     async_mode='threading',
                      logger=True,
                      engineio_logger=True)
 
@@ -122,7 +130,7 @@ def create_app(config_object='journal.config.DevelopmentConfig'):
     #     response.headers.add('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE,OPTIONS")
     #     return response, 405
 
-    # Add a debug route to check registered routes
+    # Add debug routes
     @app.route('/debug/routes')
     def list_routes():
         output = []
@@ -131,6 +139,13 @@ def create_app(config_object='journal.config.DevelopmentConfig'):
             line = urllib.parse.unquote("{:50s} {:20s} {}".format(rule.endpoint, methods, str(rule)))
             output.append(line)
         return '<br>'.join(sorted(output))
+    
+    @app.route('/debug/health')
+    def health_check():
+        return jsonify({
+            'status': 'ok',
+            'routes': [str(rule) for rule in app.url_map.iter_rules()]
+        }), 200
 
     # Register blueprints - AUTH FIRST to ensure it's properly registered
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
