@@ -12,10 +12,18 @@ const getApiBaseUrl = () => {
     return apiUrl;
   }
 
-  // Production: prefer explicit backend URL from env
+  // Production: Use environment variable or fallback to mock API
   const fromEnv = import.meta.env.VITE_API_URL as string | undefined;
+  
+  // If environment variable is set, use it
+  if (fromEnv) {
+    console.log('API Base URL (prod from env):', fromEnv, { fromEnv, hostname });
+    return fromEnv;
+  }
+  
+  // Production: Use the correct backend URL
   const apiUrl = 'https://traderedgepro.com/api';
-
+  
   console.log('API Base URL (prod):', apiUrl, {
     fromEnv,
     NODE_ENV: process.env.NODE_ENV,
