@@ -60,6 +60,7 @@ const SignUp = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    console.log('API_BASE_URL:', api.defaults.baseURL);
 
     const validationError = validateForm();
     if (validationError) {
