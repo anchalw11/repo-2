@@ -10,7 +10,7 @@ const io = socketIo(server);
 const { listenForEmails } = require('./services/emailService');
 const { configureWebRTC } = require('./services/webrtcService');
 
-const PORT = process.env.CS_API_PORT || 5000;
+const PORT = process.env.CS_API_PORT || 3001;
 
 // Middleware
 app.use(express.json());

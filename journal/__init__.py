@@ -9,17 +9,23 @@ from .admin_auth import admin_auth_bp
 from .telegram_routes import telegram_bp
 from .account_routes import account_bp
 import os
+import sys
+import urllib.parse
 from dotenv import load_dotenv
 
 def create_app(config_object='journal.config.DevelopmentConfig'):
     load_dotenv()
-    app = Flask(__name__, static_folder='../dist', static_url_path='')
+    app = Flask(__name__, 
+               static_folder='static',
+               static_url_path='',
+               template_folder='static')
     
     try:
         app.config.from_object(config_object)
     except ImportError:
         print(f"Error: Configuration object '{config_object}' not found.")
         sys.exit(1)
+        
 
     # Validate DATABASE_URL
     db_url = app.config.get('SQLALCHEMY_DATABASE_URI')
@@ -32,47 +38,54 @@ def create_app(config_object='journal.config.DevelopmentConfig'):
     # Initialize extensions with comprehensive CORS
     db.init_app(app)
     jwt = JWTManager(app)
+    
+    # Configure CORS
+    allowed_origins = [
+        "https://main.d2rt49p7nhfpv7.amplifyapp.com",  # Your Amplify domain
+        "http://localhost:3000"  # For local development
+    ]
+    
     CORS(app, 
-         origins=["*"], 
-         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-         allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
-         supports_credentials=True,
-         expose_headers=["Content-Type", "Authorization"],
-         max_age=3600)
+         resources={
+             r"/api/*": {
+                 "origins": allowed_origins,
+                 "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+                 "allow_headers": ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+                 "supports_credentials": True,
+                 "expose_headers": ["Content-Type", "Authorization"],
+                 "max_age": 3600
+             }
+         })
     socketio.init_app(app, cors_allowed_origins="*")
 
     # Add comprehensive CORS preflight handler for all routes
-    @app.before_request
-    def handle_preflight():
-        if request.method == "OPTIONS":
-            response = jsonify({"status": "ok"})
-            response.headers.add("Access-Control-Allow-Origin", "*")
-            response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With,Accept,Origin")
-            response.headers.add('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE,OPTIONS,PATCH")
-            response.headers.add('Access-Control-Max-Age', "3600")
-            return response, 200
-    
-    # Add after_request handler for all responses
     @app.after_request
     def after_request(response):
-        # Allow requests from any origin in development, but restrict in production
+        # Get the origin from the request
+        origin = request.headers.get('Origin', '')
+        
+        # Define allowed origins
         allowed_origins = [
-            'http://localhost:5173',  # Local development
-            'https://main.d2at8owu9hshr.amplifyapp.com',  # Amplify domain
-            'https://traderedgepro.com'  # Production domain
+            'https://main.d2rt49p7nhfpv7.amplifyapp.com',  # Your Amplify domain
+            'https://traderedgepro.com',                   # Production domain
+            'http://localhost:3000',                       # Local development
+            'http://localhost:5173'                        # Vite dev server
         ]
         
-        origin = request.headers.get('Origin')
+        # Set CORS headers if origin is allowed
         if origin in allowed_origins:
             response.headers.add('Access-Control-Allow-Origin', origin)
-        
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,Accept,Origin')
-        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH')
+            response.headers.add('Access-Control-Allow-Credentials', 'true')
+            response.headers.add('Access-Control-Allow-Headers', 
+                              'Content-Type, Authorization, X-Requested-With, Accept, Origin')
+            response.headers.add('Access-Control-Allow-Methods', 
+                              'GET, POST, PUT, DELETE, OPTIONS, PATCH')
+            response.headers.add('Access-Control-Max-Age', '3600')
         
         # Handle preflight requests
         if request.method == 'OPTIONS':
             response.status_code = 200
+            
         return response
     
     # Handle 405 Method Not Allowed errors - REMOVE THIS TO AVOID CONFLICTS
@@ -91,11 +104,10 @@ def create_app(config_object='journal.config.DevelopmentConfig'):
     # Add a debug route to check registered routes
     @app.route('/debug/routes')
     def list_routes():
-        import urllib
         output = []
         for rule in app.url_map.iter_rules():
-            methods = ','.join(rule.methods)
-            line = urllib.parse.unquote("{:50s} {:20s} {}".format(rule.endpoint, methods, rule))
+            methods = ','.join(rule.methods or [])
+            line = urllib.parse.unquote("{:50s} {:20s} {}".format(rule.endpoint, methods, str(rule)))
             output.append(line)
         return '<br>'.join(sorted(output))
 
@@ -112,55 +124,21 @@ def create_app(config_object='journal.config.DevelopmentConfig'):
     # Log registered routes for debugging
     print("Registered routes:")
     for rule in app.url_map.iter_rules():
-        print(f"  {rule.endpoint}: {rule.rule} [{','.join(rule.methods)}]")
+        print(f"  {rule.endpoint}: {rule.rule} [{','.join(rule.methods or [])}]")
 
-    # Move catch-all route to the very end, after all blueprints
-    @app.route('/', defaults={'path': ''}, methods=['GET'])
-    @app.route('/<path:path>', methods=['GET'])
-    def serve(path):
-        # Only handle non-API routes for static files and SPA routing
-        if path.startswith('api'):
-            # Let Flask handle API routes through blueprints
-            from flask import abort
-            abort(404)
-        
-        # Handle static files
-        if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
-            return send_from_directory(app.static_folder, path)
-        else:
-            # For SPA routing, always serve index.html for non-API routes
-            try:
-                return send_from_directory(app.static_folder, 'index.html')
-            except Exception:
-                # Fallback HTML if index.html doesn't exist
-                return '''
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Trading Journal</title>
-                    <meta charset="utf-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1">
-                    <style>
-                        .loading-container { text-align: center; padding: 50px; }
-                    </style>
-                </head>
-                <body>
-                    <div id="root">
-                        <div class="loading-container">
-                            <h1>Trading Journal</h1>
-                            <p>Application is loading...</p>
-                        </div>
-                    </div>
-                    <script>
-                        if (window.location.pathname.startsWith('/admin')) {
-                            window.location.hash = '#/admin';
-                        }
-                    </script>
-                </body>
-                </html>
-                '''
 
     # Database tables are created via create_db.py
+
+    @app.errorhandler(404)
+    def not_found(e):
+        # If the path is not for an API, serve the frontend's index.html.
+        # This allows the client-side router to handle the route.
+        if not request.path.startswith('/api/'):
+            static_folder = app.static_folder
+            if static_folder is not None:
+                return send_from_directory(static_folder, 'index.html')
+        # For API routes, return a standard 404 JSON response.
+        return jsonify(error="Not found"), 404
 
     @app.errorhandler(Exception)
     def handle_exception(e):
