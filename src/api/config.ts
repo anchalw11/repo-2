@@ -12,10 +12,10 @@ const getApiBaseUrl = () => {
     return apiUrl;
   }
 
-  // For Amplify deployment, also use local backend for now
+    // For Amplify deployment, use the production backend
   if (isAmplify) {
-    const apiUrl = 'http://localhost:5000/api';
-    console.log('API Base URL (Amplify with local backend):', apiUrl, { isAmplify, hostname });
+    const apiUrl = 'https://traderedgepro.com/api';
+    console.log('API Base URL (Amplify with production backend):', apiUrl, { isAmplify, hostname });
     return apiUrl;
   }
 
