@@ -1,4 +1,22 @@
 version: 1
+backend:
+  phases:
+    preBuild:
+      commands:
+        - echo "Installing Python dependencies..."
+        - pip3 install -r requirements.txt
+        - echo "Setting up database..."
+        - python3 create_db.py
+    build:
+      commands:
+        - echo "Backend setup completed"
+  artifacts:
+    baseDirectory: .
+    files:
+      - journal/**/*
+      - instance/**/*
+      - wsgi_production.py
+      - requirements.txt
 frontend:
   phases:
     preBuild:
@@ -17,5 +35,5 @@ frontend:
     paths: []
   environment:
     variables:
-      VITE_API_URL: https://traderedgepro.com/api
+      VITE_API_URL: /api
       NODE_ENV: production

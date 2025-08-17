@@ -1,12 +1,27 @@
-// Always use production API URL to ensure consistency
+// Dynamic API URL configuration
 const getApiBaseUrl = () => {
-  // Force production URL in all environments
-  const prodUrl = 'https://traderedgepro.com/api';
+  const isDev = import.meta.env.DEV;
+  const hostname = window.location.hostname;
+  const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+  const isAmplify = hostname.includes('amplifyapp.com');
+  
+  let apiUrl;
+  
+  if (isDev || isLocal) {
+    // Development environment
+    apiUrl = 'http://localhost:5000/api';
+  } else if (isAmplify) {
+    // Amplify deployment - use the same domain for API
+    apiUrl = `${window.location.protocol}//${window.location.host}/api`;
+  } else {
+    // Production domain
+    apiUrl = 'https://traderedgepro.com/api';
+  }
   
   // Log the API URL being used (visible in browser console)
-  console.log('API Base URL:', prodUrl);
+  console.log('API Base URL:', apiUrl, { isDev, isLocal, isAmplify, hostname });
   
-  return prodUrl;
+  return apiUrl;
 };
 
 // Export the base URL directly

@@ -70,6 +70,7 @@ const SignUp = () => {
     setIsLoading(true);
 
     try {
+      // Try to register with backend API
       const response = await api.post('/auth/register', {
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -89,7 +90,7 @@ const SignUp = () => {
         accountType: 'personal' as const,
         riskTolerance: 'moderate' as const,
         isAuthenticated: true,
-        setupComplete: false, // Setup will be completed after payment
+        setupComplete: false,
         selectedPlan,
         token: access_token,
       };
@@ -97,49 +98,44 @@ const SignUp = () => {
       login(userData, access_token);
       localStorage.setItem('user_data', JSON.stringify(userData));
 
+      // Successfully registered, redirect to payment
       navigate('/payment', { state: { selectedPlan } });
     } catch (err: any) {
-      console.error('Signup error:', err);
+      console.error('Backend signup failed, using fallback:', err);
       
-      // Always create temporary account for any signup error
-      console.log('Creating temporary account due to signup error...');
+      // Create temporary account for immediate access to payment flow
+      const tempToken = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem('access_token', tempToken);
       
-      // Use global fallback function if available, otherwise use inline fallback
-      if ((window as any).handleSignupFallback) {
-        (window as any).handleSignupFallback(formData, selectedPlan, navigate, login, setShowTempNotice);
-      } else {
-        // Inline fallback
-        const tempToken = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        localStorage.setItem('access_token', tempToken);
-        
-        const userData = {
-          id: `temp_user_${Date.now()}`,
-          name: `${formData.firstName} ${formData.lastName}`,
-          email: formData.email,
-          membershipTier: selectedPlan.name.toLowerCase(),
-          accountType: 'personal' as const,
-          riskTolerance: 'moderate' as const,
-          isAuthenticated: true,
-          setupComplete: false,
-          selectedPlan,
-          token: tempToken,
-          isTemporary: true,
-        };
+      const userData = {
+        id: `temp_user_${Date.now()}`,
+        name: `${formData.firstName} ${formData.lastName}`,
+        email: formData.email,
+        membershipTier: selectedPlan.name.toLowerCase(),
+        accountType: 'personal' as const,
+        riskTolerance: 'moderate' as const,
+        isAuthenticated: true,
+        setupComplete: false,
+        selectedPlan,
+        token: tempToken,
+        isTemporary: true,
+      };
 
-        login(userData, tempToken);
-        localStorage.setItem('user_data', JSON.stringify(userData));
-        localStorage.setItem('temp_signup_data', JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          password: formData.password,
-          plan_type: selectedPlan.name.toLowerCase(),
-          timestamp: Date.now()
-        }));
+      login(userData, tempToken);
+      localStorage.setItem('user_data', JSON.stringify(userData));
+      
+      // Store signup data for later backend sync
+      localStorage.setItem('pending_signup_data', JSON.stringify({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+        plan_type: selectedPlan.name.toLowerCase(),
+        timestamp: Date.now()
+      }));
 
-        setShowTempNotice(true);
-        navigate('/payment', { state: { selectedPlan } });
-      }
+      // Redirect to payment page immediately
+      navigate('/payment', { state: { selectedPlan } });
     } finally {
       setIsLoading(false);
     }
