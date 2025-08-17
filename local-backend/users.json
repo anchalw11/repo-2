@@ -1,0 +1,12 @@
+[
+  {
+    "id": "user_1755419565062_oap9grykx",
+    "firstName": "Test",
+    "lastName": "User",
+    "email": "test@example.com",
+    "password": "$2a$10$OIks1OP.FzGv4GLEE2eWdOR0UWJJDVmyCnx/JOrORiFennCSJKhMC",
+    "plan_type": "professional",
+    "createdAt": "2025-08-17T08:32:45.062Z",
+    "isActive": true
+  }
+]

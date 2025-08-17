@@ -6,13 +6,20 @@ const getApiBaseUrl = () => {
   const isAmplify = hostname.includes('amplifyapp.com');
 
   if (isDev || isLocal) {
-    // Development environment
-    const apiUrl = 'http://127.0.0.1:5000/api';
+    // Development environment - use local backend
+    const apiUrl = 'http://localhost:5000/api';
     console.log('API Base URL (dev):', apiUrl, { isDev, isLocal, isAmplify, hostname });
     return apiUrl;
   }
 
-  // Production: Use environment variable or fallback to mock API
+  // For Amplify deployment, also use local backend for now
+  if (isAmplify) {
+    const apiUrl = 'http://localhost:5000/api';
+    console.log('API Base URL (Amplify with local backend):', apiUrl, { isAmplify, hostname });
+    return apiUrl;
+  }
+
+  // Production: Use environment variable or fallback to local backend
   const fromEnv = import.meta.env.VITE_API_URL as string | undefined;
   
   // If environment variable is set, use it
@@ -21,10 +28,10 @@ const getApiBaseUrl = () => {
     return fromEnv;
   }
   
-  // Production: Use the correct backend URL
-  const apiUrl = 'https://traderedgepro.com/api';
+  // Fallback to local backend instead of broken production server
+  const apiUrl = 'http://localhost:5000/api';
   
-  console.log('API Base URL (prod):', apiUrl, {
+  console.log('API Base URL (fallback to local):', apiUrl, {
     fromEnv,
     NODE_ENV: process.env.NODE_ENV,
     isDev,
