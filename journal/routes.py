@@ -15,34 +15,54 @@ plan_generation_bp = Blueprint('plan_generation', __name__)
 def add_trade():
     if request.method == 'OPTIONS':
         return '', 200
-    data = request.get_json()
-    user_id = get_jwt_identity()
-
-    if not data or not all(k in data for k in ['pair', 'type', 'entry', 'stopLoss', 'takeProfit']):
-        return jsonify({'error': 'Missing required trade data'}), 422
-
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({'error': 'User not found'}), 404
-
-    new_trade = Trade(
-        signal_id=data['id'],
-        date=datetime.utcnow().date(),
-        asset=data['pair'],
-        direction=data['type'].lower(),
-        entry_price=float(data['entry']),
-        sl=float(data['stopLoss']),
-        tp=float(data['takeProfit'][0]),
-        outcome='pending',
-        lot_size=0,
-        exit_price=0,
-        user_id=user.id
-    )
     
-    db.session.add(new_trade)
-    db.session.commit()
-    
-    return jsonify({'message': 'Trade added successfully', 'trade_id': new_trade.id}), 201
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 422
+            
+        user_id = get_jwt_identity()
+
+        # Validate required fields
+        required_fields = ['pair', 'type', 'entry', 'stopLoss', 'takeProfit']
+        missing_fields = [field for field in required_fields if field not in data or data[field] is None]
+        if missing_fields:
+            return jsonify({'error': f'Missing required fields: {missing_fields}'}), 422
+
+        # Validate numeric fields
+        try:
+            entry_price = float(data['entry'])
+            stop_loss = float(data['stopLoss'])
+            take_profit = float(data['takeProfit'][0]) if isinstance(data['takeProfit'], list) else float(data['takeProfit'])
+        except (ValueError, TypeError, IndexError) as e:
+            return jsonify({'error': f'Invalid numeric values in trade data: {str(e)}'}), 422
+
+        user = User.query.get(user_id) if user_id else None
+        if not user:
+            return jsonify({'error': 'User not found or not authenticated'}), 404
+
+        new_trade = Trade(
+            signal_id=data.get('id', f'trade_{datetime.utcnow().timestamp()}'),
+            date=datetime.utcnow().date(),
+            asset=data['pair'],
+            direction=data['type'].lower(),
+            entry_price=entry_price,
+            sl=stop_loss,
+            tp=take_profit,
+            outcome='pending',
+            lot_size=data.get('lot_size', 0),
+            exit_price=0,
+            user_id=user.id
+        )
+        
+        db.session.add(new_trade)
+        db.session.commit()
+        
+        return jsonify({'message': 'Trade added successfully', 'trade_id': new_trade.id}), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to add trade: {str(e)}'}), 500
 
 @trades_bp.route('/trades', methods=['GET'])
 @jwt_required()
@@ -326,19 +346,28 @@ def generate_comprehensive_risk_plan_with_prop_firm_rules(data):
 def create_or_update_risk_plan():
     if request.method == 'OPTIONS':
         return '', 200
-    data = request.get_json()
-    if not data:
-        return jsonify({'error': 'No data provided'}), 400
-
+        
     try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 422
+
         # Log the received data for debugging
         print("Received risk plan data:", data)
         
         # Validate required fields
         required_fields = ['trades_per_day', 'trading_session', 'prop_firm', 'account_type', 'account_size']
-        for field in required_fields:
-            if field not in data or not data[field]:
-                return jsonify({'error': f'Missing required field: {field}'}), 422
+        missing_fields = [field for field in required_fields if field not in data or not data[field]]
+        if missing_fields:
+            return jsonify({'error': f'Missing required fields: {missing_fields}'}), 422
+            
+        # Validate numeric fields with safe conversion
+        try:
+            account_size = _get_float(data, 'account_size')
+            account_equity = _get_float(data, 'account_equity') or account_size
+            risk_percentage = _get_float(data, 'risk_percentage') or 1.0
+        except ValueError as e:
+            return jsonify({'error': str(e)}), 422
         
         # Generate comprehensive risk management plan
         comprehensive_plan = generate_comprehensive_risk_plan_with_prop_firm_rules(data)
@@ -366,9 +395,9 @@ def create_or_update_risk_plan():
             risk_plan = RiskPlan(user_id=user.id)
             db.session.add(risk_plan)
         
-        # Update risk plan with questionnaire data
-        risk_plan.initial_balance = float(data.get('account_size', 10000))
-        risk_plan.account_equity = float(data.get('account_equity', data.get('account_size', 10000)))
+        # Update risk plan with validated data
+        risk_plan.initial_balance = account_size
+        risk_plan.account_equity = account_equity
         risk_plan.trades_per_day = data.get('trades_per_day')
         risk_plan.trading_session = data.get('trading_session')
         risk_plan.crypto_assets = json.dumps(data.get('crypto_assets', []))
@@ -376,8 +405,8 @@ def create_or_update_risk_plan():
         risk_plan.has_account = data.get('has_account')
         risk_plan.prop_firm = data.get('prop_firm')
         risk_plan.account_type = data.get('account_type')
-        risk_plan.account_size = float(data.get('account_size', 10000))
-        risk_plan.risk_percentage = float(data.get('risk_percentage', 1.0))
+        risk_plan.account_size = account_size
+        risk_plan.risk_percentage = risk_percentage
         
         # Save risk parameters
         risk_calc = comprehensive_plan['risk_calculations']
@@ -399,7 +428,10 @@ def create_or_update_risk_plan():
             'user_id': user.id
         }), 200
         
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 422
     except Exception as e:
+        db.session.rollback()
         print(f"Error processing risk plan: {str(e)}")
         return jsonify({'error': f'An internal server error occurred: {str(e)}'}), 500
 

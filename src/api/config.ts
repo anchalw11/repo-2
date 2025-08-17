@@ -4,20 +4,26 @@ const getApiBaseUrl = () => {
   const hostname = window.location.hostname;
   const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
   const isAmplify = hostname.includes('amplifyapp.com');
-  
-  let apiUrl;
-  
+
   if (isDev || isLocal) {
     // Development environment
-    apiUrl = 'http://127.0.0.1:5000/api';
-  } else {
-    // Production environment
-    apiUrl = '/api';
+    const apiUrl = 'http://127.0.0.1:5000/api';
+    console.log('API Base URL (dev):', apiUrl, { isDev, isLocal, isAmplify, hostname });
+    return apiUrl;
   }
-  
-  // Log the API URL being used (visible in browser console)
-  console.log('API Base URL:', apiUrl, { isDev, isLocal, isAmplify, hostname });
-  
+
+  // Production: prefer explicit backend URL from env
+  const fromEnv = import.meta.env.VITE_API_URL as string | undefined;
+  const apiUrl = fromEnv && fromEnv.trim().length > 0 ? fromEnv : '/api';
+
+  console.log('API Base URL (prod):', apiUrl, {
+    fromEnv,
+    NODE_ENV: process.env.NODE_ENV,
+    isDev,
+    isLocal,
+    isAmplify,
+    hostname
+  });
   return apiUrl;
 };
 

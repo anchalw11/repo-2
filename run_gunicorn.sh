@@ -9,4 +9,6 @@ set -e
 # --log-level info: Set the logging level to info.
 # wsgi_production:application: Point Gunicorn to the 'application' object in the 'wsgi_production.py' file.
 echo "Starting Gunicorn..."
-gunicorn --bind 0.0.0.0:8080 --workers 4 --log-level info "wsgi_production:application"
+PORT=${PORT:-8080}
+echo "Binding to port ${PORT}"
+gunicorn --bind 0.0.0.0:${PORT} --workers 4 --log-level info "wsgi_production:application"

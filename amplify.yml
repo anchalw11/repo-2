@@ -1,18 +1,4 @@
 version: 1
-backend:
-  phases:
-    preBuild:
-      commands:
-        - echo "Installing Python dependencies..."
-        - pip install -r requirements.txt
-    build:
-      commands:
-        - echo "Backend build step is not needed for Flask."
-  start:
-    commands:
-      - echo "Starting backend server..."
-      - chmod +x run_gunicorn.sh
-      - ./run_gunicorn.sh
 frontend:
   phases:
     preBuild:
@@ -29,11 +15,6 @@ frontend:
     paths:
       - node_modules/**/*
   customRules:
-    - source: "/api/<*>
-      target: "http://localhost:8080/api/<*>"
-      status: 200
-      condition: null
-    - source: "/<*>
+    - source: "/<*>"
       target: "/index.html"
       status: 200
-      condition: null
