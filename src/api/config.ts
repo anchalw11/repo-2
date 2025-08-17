@@ -9,13 +9,10 @@ const getApiBaseUrl = () => {
   
   if (isDev || isLocal) {
     // Development environment
-    apiUrl = 'http://localhost:5000/api';
-  } else if (isAmplify) {
-    // Amplify deployment - use the same domain for API
-    apiUrl = `${window.location.protocol}//${window.location.host}/api`;
+    apiUrl = 'http://127.0.0.1:5000/api';
   } else {
-    // Production domain
-    apiUrl = 'https://traderedgepro.com/api';
+    // Production environment
+    apiUrl = '/api';
   }
   
   // Log the API URL being used (visible in browser console)

@@ -4,36 +4,36 @@ backend:
     preBuild:
       commands:
         - echo "Installing Python dependencies..."
-        - pip3 install -r requirements.txt
-        - echo "Setting up database..."
-        - python3 create_db.py
+        - pip install -r requirements.txt
     build:
       commands:
-        - echo "Backend setup completed"
-  artifacts:
-    baseDirectory: .
-    files:
-      - journal/**/*
-      - instance/**/*
-      - wsgi_production.py
-      - requirements.txt
+        - echo "Backend build step is not needed for Flask."
+  start:
+    commands:
+      - echo "Starting backend server..."
+      - chmod +x run_gunicorn.sh
+      - ./run_gunicorn.sh
 frontend:
   phases:
     preBuild:
       commands:
         - npm ci
-        - echo "Building with timestamp $(date)"
     build:
       commands:
         - npm run build
-        - echo "Build completed at $(date)"
   artifacts:
     baseDirectory: dist
     files:
-      - '**/*'
+      - "**/*"
   cache:
-    paths: []
-  environment:
-    variables:
-      VITE_API_URL: /api
-      NODE_ENV: production
+    paths:
+      - node_modules/**/*
+  customRules:
+    - source: "/api/<*>
+      target: "http://localhost:8080/api/<*>"
+      status: 200
+      condition: null
+    - source: "/<*>
+      target: "/index.html"
+      status: 200
+      condition: null
