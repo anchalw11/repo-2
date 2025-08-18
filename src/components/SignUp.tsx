@@ -13,9 +13,9 @@ const SignUp = () => {
 
   // Get selected plan from location state or default
   const selectedPlan = location.state?.selectedPlan || {
-    name: 'Professional',
-    price: 99,
-    period: 'month'
+    name: 'Enterprise',
+    price: 499,
+    period: '3 months'
   };
 
   const [formData, setFormData] = useState({
@@ -60,10 +60,25 @@ const SignUp = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    console.log('API_BASE_URL:', api.defaults.baseURL);
+    
+    // Log detailed API configuration
+    console.log('API Configuration:', {
+      baseURL: api.defaults.baseURL,
+      headers: api.defaults.headers,
+      env: {
+        NODE_ENV: process.env.NODE_ENV,
+        VITE_API_URL: import.meta.env.VITE_API_URL,
+        DEV: import.meta.env.DEV,
+        PROD: import.meta.env.PROD,
+        MODE: import.meta.env.MODE,
+      },
+      location: window.location.href,
+      hostname: window.location.hostname
+    });
 
     const validationError = validateForm();
     if (validationError) {
+      console.error('Form validation failed:', validationError);
       setError(validationError);
       return;
     }

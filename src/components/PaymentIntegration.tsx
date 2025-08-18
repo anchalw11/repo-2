@@ -87,7 +87,7 @@ const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPayme
   };
 
   // Stripe Payment Processing
-  const processStripePayment = async () => {
+  const processStripePayment = async (plan: { price: number }) => {
     if (!stripe || !elements) {
       return { success: false, error: 'Stripe.js has not loaded yet.' };
     }
@@ -103,7 +103,7 @@ const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPayme
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ amount: selectedPlan.price * 100 }),
+      body: JSON.stringify({ amount: plan.price * 100 }),
     });
 
     const { clientSecret, error: backendError } = await response.json();
@@ -181,7 +181,7 @@ const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPayme
       // Process payment based on selected method
       switch (selectedMethod) {
         case 'stripe':
-          paymentResult = await processStripePayment();
+          paymentResult = await processStripePayment(selectedPlan);
           break;
         case 'paypal':
           paymentResult = await processPayPalPayment();

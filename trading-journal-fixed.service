@@ -1,0 +1,13 @@
+[Unit]
+Description=Gunicorn instance to serve TraderEdge Pro
+After=network.target
+
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/home/ubuntu/repo-2
+Environment="PATH=/home/ubuntu/repo-2/venv/bin"
+ExecStart=/home/ubuntu/repo-2/venv/bin/gunicorn --workers 3 --bind unix:trading-journal.sock -m 007 wsgi:application
+
+[Install]
+WantedBy=multi-user.target

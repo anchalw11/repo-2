@@ -1,9 +1,11 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useUser } from '../contexts/UserContext';
 
 const RiskManagementPlan: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useUser();
   const { answers, plan } = location.state || {};
 
   if (!answers || !plan) {
@@ -69,12 +71,21 @@ const RiskManagementPlan: React.FC = () => {
           </div>
         </div>
         <div className="text-center mt-8">
-          <button
-            onClick={() => navigate('/upload-screenshot')}
-            className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg"
-          >
-            Proceed to Upload Screenshot
-          </button>
+          {user?.membershipTier === 'kickstarter' ? (
+            <button
+              onClick={() => navigate('/upload-screenshot')}
+              className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg"
+            >
+              Proceed to Upload Screenshot
+            </button>
+          ) : (
+            <button
+              onClick={() => navigate('/crypto-dashboard')}
+              className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg"
+            >
+              Proceed to Dashboard
+            </button>
+          )}
         </div>
       </div>
     </div>

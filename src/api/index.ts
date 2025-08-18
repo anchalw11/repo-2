@@ -29,7 +29,18 @@ api.interceptors.response.use(
       url: error.config?.url,
       method: error.config?.method,
       status: error.response?.status,
+      statusText: error.response?.statusText,
       data: error.response?.data,
+      headers: error.response?.headers,
+      request: {
+        baseURL: error.config?.baseURL,
+        url: error.config?.url,
+        method: error.config?.method,
+        headers: error.config?.headers,
+        data: error.config?.data,
+        timeout: error.config?.timeout,
+        withCredentials: error.config?.withCredentials
+      },
       config: error.config
     });
 
