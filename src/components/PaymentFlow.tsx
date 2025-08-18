@@ -10,12 +10,8 @@ const PaymentFlow = () => {
   const location = useLocation();
   const { user, setUser } = useUser();
   
-  // Get selected plan from location state or default
-  const selectedPlan = location.state?.selectedPlan || {
-    name: 'Professional',
-    price: 99,
-    period: 'month'
-  };
+  // Get selected plan from location state
+  const selectedPlan = location.state?.selectedPlan;
 
   const [paymentComplete, setPaymentComplete] = useState(false);
 
