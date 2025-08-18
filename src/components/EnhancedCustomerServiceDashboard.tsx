@@ -97,11 +97,59 @@ const EnhancedCustomerServiceDashboard = ({ onLogout }: { onLogout?: () => void 
 
   // Check authentication on mount
   useEffect(() => {
-    const token = localStorage.getItem('cs_token');
-    if (token === 'cs_mpin_authenticated_token') {
+    const token = localStorage.getItem('admin_token');
+    const userType = localStorage.getItem('admin_user_type');
+    if (token && userType === 'customer-service') {
       setIsAuthenticated(true);
     }
   }, []);
+
+  // Load mock data function
+  const loadMockData = () => {
+    const mockChats: LiveChat[] = [
+      {
+        chatId: 'chat_001',
+        userId: 'user_001',
+        userName: 'John Trader (Pro Plan)',
+        query: 'Need help with prop firm challenge rules - PRIORITY CHAT',
+        messages: [],
+        timestamp: new Date().toISOString(),
+        status: 'waiting',
+        priority: 'high'
+      },
+      {
+        chatId: 'chat_002',
+        userId: 'user_002',
+        userName: 'Sarah Wilson (Enterprise)',
+        query: 'Payment verification issue - PRIORITY CHAT',
+        messages: [],
+        timestamp: new Date(Date.now() - 300000).toISOString(),
+        status: 'active',
+        priority: 'high'
+      },
+      {
+        chatId: 'chat_003',
+        userId: 'user_003',
+        userName: 'Mike Johnson (Basic)',
+        query: 'General trading questions - Standard wait time',
+        messages: [],
+        timestamp: new Date(Date.now() - 600000).toISOString(),
+        status: 'waiting',
+        priority: 'low'
+      },
+      {
+        chatId: 'chat_004',
+        userId: 'user_004',
+        userName: 'Alex Chen (Kickstarter)',
+        query: 'Account setup questions - Standard wait time',
+        messages: [],
+        timestamp: new Date(Date.now() - 900000).toISOString(),
+        status: 'waiting',
+        priority: 'low'
+      }
+    ];
+    setLiveChats(mockChats);
+  };
 
   // Listen for new chat requests
   useEffect(() => {
@@ -153,10 +201,18 @@ const EnhancedCustomerServiceDashboard = ({ onLogout }: { onLogout?: () => void 
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('admin_token');
+    localStorage.removeItem('admin_username');
+    localStorage.removeItem('admin_login_time');
+    localStorage.removeItem('admin_mpin_authenticated');
+    localStorage.removeItem('admin_user_type');
     localStorage.removeItem('cs_token');
     localStorage.removeItem('cs_agent');
     setIsAuthenticated(false);
     setMpin('');
+    if (onLogout) {
+      onLogout();
+    }
   };
 
   const sendMessage = () => {
@@ -475,11 +531,11 @@ const EnhancedCustomerServiceDashboard = ({ onLogout }: { onLogout?: () => void 
                         <div className="text-sm text-gray-300 mb-2 truncate">{chat.query}</div>
                         <div className="flex gap-2">
                           <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                            chat.priority === 'high' ? 'bg-red-500/20 text-red-300 border border-red-400/30' :
+                            chat.priority === 'high' ? 'bg-red-500/20 text-red-300 border border-red-400/30 animate-pulse' :
                             chat.priority === 'medium' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-400/30' :
-                            'bg-green-500/20 text-green-300 border border-green-400/30'
+                            'bg-gray-500/20 text-gray-300 border border-gray-400/30'
                           }`}>
-                            {chat.priority.toUpperCase()}
+                            {chat.priority === 'high' ? '🔥 PRIORITY' : chat.priority.toUpperCase()}
                           </span>
                           <span className={`px-2 py-1 rounded text-xs font-semibold ${
                             chat.status === 'active' ? 'bg-green-500/20 text-green-300' :
@@ -544,6 +600,23 @@ const EnhancedCustomerServiceDashboard = ({ onLogout }: { onLogout?: () => void 
                             placeholder="Type your response..."
                             className="flex-1 bg-gray-700/50 border border-cyan-400/30 rounded-xl px-4 py-3 text-white placeholder-cyan-200/50 focus:outline-none focus:ring-2 focus:ring-cyan-400 backdrop-blur-sm"
                           />
+                          <button
+                            onClick={() => {
+                              const currentChatData = liveChats.find(c => c.chatId === currentChat);
+                              if (currentChatData) {
+                                // Mark as resolved
+                                setLiveChats(prev => prev.map(chat => 
+                                  chat.chatId === currentChat 
+                                    ? { ...chat, status: 'resolved' as const }
+                                    : chat
+                                ));
+                                setCurrentChat(null);
+                              }
+                            }}
+                            className="px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-400 hover:to-emerald-500 font-medium transition-all hover:scale-105"
+                          >
+                            <CheckCircle className="w-5 h-5" />
+                          </button>
                           <button
                             onClick={sendMessage}
                             className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl hover:from-cyan-400 hover:to-blue-500 font-medium transition-all hover:scale-105"

@@ -1,59 +1,152 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { TrendingUp, ArrowLeft } from 'lucide-react';
+import { TrendingUp, ArrowLeft, Loader2 } from 'lucide-react';
 import PaymentIntegration from './PaymentIntegration';
 import { useUser } from '../contexts/UserContext';
 import axios from 'axios';
+
+interface Plan {
+  id: string;
+  name: string;
+  price: number;
+  period: string;
+  description: string;
+  priceId?: string;
+}
+
+interface PaymentDetails {
+  plan: string;
+  price: number;
+  period: string;
+  date: string;
+  status: 'completed' | 'failed' | 'pending';
+}
 
 const PaymentFlow = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, setUser } = useUser();
   
-  // Get selected plan from location state
-  const selectedPlan = location.state?.selectedPlan;
-
+  // State management
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [paymentComplete, setPaymentComplete] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handlePaymentComplete = async () => {
-    setPaymentComplete(true);
-    // Update user with premium membership
-    if (user) {
-      const newMembershipTier = selectedPlan.name.toLowerCase();
-      try {
-        await axios.put('/api/user/plan', { plan: newMembershipTier }, {
-          headers: {
-            Authorization: `Bearer ${user.token}`
-          }
-        });
-        setUser({
-          ...user,
-          membershipTier: newMembershipTier as 'basic' | 'professional' | 'institutional' | 'elite'
-        });
-      } catch (error) {
-        console.error('Failed to update plan', error);
-      }
+  // Load plan from location state or redirect if missing
+  useEffect(() => {
+    const plan = location.state?.selectedPlan;
+    if (!plan) {
+      // If no plan selected, redirect to plans page
+      navigate('/pricing', { replace: true });
+      return;
     }
-  };
+    setSelectedPlan(plan);
+    setIsLoading(false);
+  }, [location.state, navigate]);
 
-  // Navigate to questionnaire only when payment is complete
-  React.useEffect(() => {
-    // Check if user is authenticated (allow temporary accounts)
+  // Handle authentication and temporary accounts
+  useEffect(() => {
     if (!user?.isAuthenticated) {
-      navigate('/signin');
+      // Store intended URL before redirecting to sign in
+      localStorage.setItem('redirect_after_login', '/payment');
+      navigate('/signin', { replace: true });
       return;
     }
     
-    // If this is a temporary account, show a notice but allow payment
     if (user?.isTemporary) {
+      // Handle temporary account flow if needed
       console.log('Processing payment for temporary account');
     }
-    if (paymentComplete) {
-      setTimeout(() => {
-        navigate('/questionnaire');
-      }, 3000); // 3-second delay to show the message
+  }, [user, navigate]);
+
+  const handlePaymentComplete = async () => {
+    if (!selectedPlan) {
+      setError('No plan selected. Please select a plan and try again.');
+      return;
     }
-  }, [paymentComplete, navigate, user]);
+
+    try {
+      setPaymentComplete(true);
+      
+      if (user) {
+        const newMembershipTier = selectedPlan.id;
+        
+        // Update user's plan on the backend
+        await axios.put(
+          'https://traderedgepro.com/api/user/plan', 
+          { 
+            plan: newMembershipTier,
+            price: selectedPlan.price,
+            period: selectedPlan.period
+          }, 
+          {
+            headers: {
+              Authorization: `Bearer ${user.token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        
+        // Update user context with new membership
+        setUser({
+          ...user,
+          membershipTier: newMembershipTier as 'starter' | 'pro' | 'enterprise'
+        });
+        
+        // Store payment details
+        const paymentDetails: PaymentDetails = {
+          plan: selectedPlan.name,
+          price: selectedPlan.price,
+          period: selectedPlan.period,
+          date: new Date().toISOString(),
+          status: 'completed'
+        };
+        
+        localStorage.setItem('payment_details', JSON.stringify(paymentDetails));
+        
+        // Redirect to questionnaire after a short delay
+        setTimeout(() => {
+          navigate('/questionnaire', { 
+            state: { 
+              fromPayment: true,
+              plan: selectedPlan
+            },
+            replace: true
+          });
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Payment processing failed:', error);
+      setError('Failed to process payment. Please try again.');
+      setPaymentComplete(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 flex items-center justify-center">
+        <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!selectedPlan) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 flex items-center justify-center">
+        <div className="text-center p-8 max-w-md">
+          <h2 className="text-2xl font-bold text-white mb-4">No Plan Selected</h2>
+          <p className="text-gray-400 mb-6">Please select a plan to continue with the payment process.</p>
+          <button
+            onClick={() => navigate('/pricing')}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+          >
+            View Plans
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
@@ -95,6 +188,13 @@ const PaymentFlow = () => {
             </p>
           </div>
 
+          {/* Error Message */}
+          {error && (
+            <div className="max-w-2xl mx-auto mb-8 p-4 bg-red-900/30 border border-red-700 rounded-lg text-red-200">
+              {error}
+            </div>
+          )}
+
           {/* Payment Integration */}
           {paymentComplete ? (
             <div className="max-w-2xl mx-auto p-6 text-center">
@@ -109,7 +209,12 @@ const PaymentFlow = () => {
             </div>
           ) : (
             <PaymentIntegration 
-              selectedPlan={selectedPlan}
+              selectedPlan={{
+                name: selectedPlan.name,
+                price: selectedPlan.price,
+                period: selectedPlan.period,
+                priceId: selectedPlan.priceId || ''
+              }}
               onPaymentComplete={handlePaymentComplete}
             />
           )}

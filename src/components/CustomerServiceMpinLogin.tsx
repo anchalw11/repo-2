@@ -23,9 +23,17 @@ const CustomerServiceMpinLogin: React.FC = () => {
     try {
       // Customer Service MPIN is 061823
       if (mpin === '061823') {
+        // Set authentication tokens for customer service
+        localStorage.setItem('admin_token', 'cs_mpin_authenticated_token');
+        localStorage.setItem('admin_username', 'customer-service');
+        localStorage.setItem('admin_login_time', new Date().toISOString());
+        localStorage.setItem('admin_mpin_authenticated', 'true');
+        localStorage.setItem('admin_user_type', 'customer-service');
         localStorage.setItem('cs_token', 'cs_mpin_authenticated_token');
         localStorage.setItem('cs_agent', 'Customer Service Agent');
-        navigate('/customer-service/dashboard');
+        
+        // Navigate to dashboard
+        navigate('/customer-service/dashboard', { replace: true });
       } else {
         setError('Invalid MPIN. Access denied.');
       }

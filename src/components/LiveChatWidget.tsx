@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, X, Send, Bot, User, Minimize2, Maximize2, Zap, Shield, Cpu } from 'lucide-react';
+import { MessageCircle, X, Send, User, Minimize2, Maximize2, Zap, Cpu } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -218,20 +218,34 @@ const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ userId, userName }) => 
   };
 
   const notifyCustomerService = (query: string) => {
+    // Get user plan from localStorage to determine priority
+    const userPlan = localStorage.getItem('user_plan') || 'basic';
+    const isPriorityUser = ['pro', 'enterprise'].includes(userPlan.toLowerCase());
+    
     const chatData = {
       chatId: chatId.current,
       userId: userId || 'anonymous',
-      userName: userName || 'Anonymous Quantum Trader',
-      query: query,
+      userName: `${userName || 'Anonymous Quantum Trader'} (${userPlan.charAt(0).toUpperCase() + userPlan.slice(1)})`,
+      query: isPriorityUser ? `${query} - PRIORITY CHAT` : `${query} - Standard wait time`,
       messages: messages,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      priority: isPriorityUser ? 'high' : 'low',
+      status: 'waiting'
     };
 
+    // Store in localStorage for customer service dashboard
     const existingChats = JSON.parse(localStorage.getItem('cs_live_chats') || '[]');
     existingChats.push(chatData);
     localStorage.setItem('cs_live_chats', JSON.stringify(existingChats));
 
+    // Dispatch event for real-time updates
     window.dispatchEvent(new CustomEvent('newChatRequest', { detail: chatData }));
+    
+    // Also store in user data for persistence
+    const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+    if (!userData.chatHistory) userData.chatHistory = [];
+    userData.chatHistory.push(chatData);
+    localStorage.setItem('user_data', JSON.stringify(userData));
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -251,7 +265,7 @@ const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ userId, userName }) => 
             boxShadow: '0 0 30px rgba(6, 182, 212, 0.5), inset 0 0 30px rgba(147, 51, 234, 0.3)'
           }}
         >
-          <MessageSquare className="w-6 h-6" />
+          <MessageCircle className="w-6 h-6" />
           <div className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-400/20 to-purple-400/20 animate-ping"></div>
           {unreadCount > 0 && (
             <span className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold animate-bounce border-2 border-white">

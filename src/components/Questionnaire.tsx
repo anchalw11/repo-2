@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import CustomSelect from './CustomSelect';
 import FuturisticBackground from './FuturisticBackground';
 import { useUser } from '../contexts/UserContext';
@@ -84,7 +84,11 @@ const Questionnaire: React.FC = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useUser();
+  
+  // Get state from location
+  const locationState = location.state as { fromPayment?: boolean; plan?: any } | undefined;
 
   useEffect(() => {
     if (!user || user.membershipTier === 'free') {
@@ -96,6 +100,38 @@ const Questionnaire: React.FC = () => {
     setIsLoading(true);
     localStorage.setItem('questionnaireAnswers', JSON.stringify(answers));
     console.log('User Answers:', answers);
+
+    // Check if coming from payment flow
+    const fromPayment = locationState?.fromPayment;
+    const paymentPlan = locationState?.plan;
+
+    try {
+      // Save questionnaire answers to backend
+      await api.post('/api/user/questionnaire', answers);
+      
+      if (fromPayment && paymentPlan) {
+        // Mark questionnaire as completed
+        localStorage.setItem('questionnaire_completed', 'true');
+        
+        // Redirect to risk management plan with questionnaire data
+        navigate('/risk-management-plan', { 
+          state: { 
+            fromQuestionnaire: true,
+            questionnaireData: answers,
+            plan: paymentPlan
+          } 
+        });
+        return;
+      }
+      
+      // Default redirect if not from payment flow
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Error saving questionnaire:', error);
+      // Handle error (show error message to user)
+    } finally {
+      setIsLoading(false);
+    }
 
     const backendAnswers = {
       trades_per_day: answers.tradesPerDay,

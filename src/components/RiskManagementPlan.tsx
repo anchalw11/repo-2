@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
 
@@ -6,9 +6,56 @@ const RiskManagementPlan: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useUser();
-  const { answers, plan } = location.state || {};
+  const { answers, plan, fromQuestionnaire, questionnaireData } = location.state || {};
 
-  if (!answers || !plan) {
+  // Handle case where we come from questionnaire with data
+  useEffect(() => {
+    if (fromQuestionnaire && questionnaireData) {
+      // Generate plan based on questionnaire data
+      // This is a simplified example - you'll need to implement your actual plan generation logic
+      const generatedPlan = {
+        tradesToPass: 10, // Example value
+        riskAmount: 100, // Example value
+        profitAmount: 200 // Example value
+      };
+      
+      // Store the generated plan in state
+      setPlan(generatedPlan);
+      
+      // Automatically save the plan and redirect to dashboard after a delay
+      const timer = setTimeout(() => {
+        // Save plan to backend
+        savePlanToBackend(generatedPlan);
+        // Redirect to dashboard
+        navigate('/dashboard');
+      }, 5000); // 5 second delay to show the plan
+      
+      return () => clearTimeout(timer);
+    }
+  }, [fromQuestionnaire, questionnaireData, navigate]);
+  
+  const [currentPlan, setPlan] = useState(plan);
+  
+  const savePlanToBackend = async (planData: any) => {
+    try {
+      // Replace with your actual API call to save the plan
+      await fetch('/api/user/plan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        },
+        body: JSON.stringify({
+          plan: planData,
+          questionnaire: questionnaireData
+        })
+      });
+    } catch (error) {
+      console.error('Failed to save plan:', error);
+    }
+  };
+
+  if ((!answers || !currentPlan) && !fromQuestionnaire) {
     return (
       <div className="min-h-screen bg-gray-900 text-white p-8">
         <h1 className="text-3xl font-bold mb-4">Error</h1>
@@ -80,10 +127,15 @@ const RiskManagementPlan: React.FC = () => {
             </button>
           ) : (
             <button
-              onClick={() => navigate('/crypto-dashboard')}
+              onClick={() => {
+                if (fromQuestionnaire) {
+                  savePlanToBackend(currentPlan);
+                }
+                navigate('/dashboard');
+              }}
               className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg"
             >
-              Proceed to Dashboard
+              {fromQuestionnaire ? 'Save Plan & Go to Dashboard' : 'Proceed to Dashboard'}
             </button>
           )}
         </div>

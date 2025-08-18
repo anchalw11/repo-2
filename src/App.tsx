@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import AuthManager from './utils/authManager';
 import LandingPage from './components/LandingPage';
 import SignUp from './components/SignUp';
 import SignIn from './components/SignIn';
 import MembershipPlans from './components/MembershipPlans';
 import PaymentFlow from './components/PaymentFlow';
-import PaymentIntegration from './components/PaymentIntegration';
+import Questionnaire from './components/Questionnaire';
 import PropFirmSelection from './components/PropFirmSelection';
 import AccountConfiguration from './components/AccountConfiguration';
 import RiskConfiguration from './components/RiskConfiguration';
@@ -49,13 +50,28 @@ const AppContent = () => {
   const { resetPlan } = useTradingPlan();
   const navigate = useNavigate();
   const location = useLocation();
+  const authManager = AuthManager.getInstance();
 
   useEffect(() => {
     const storedTheme = localStorage.getItem('dashboard-theme');
     if (storedTheme) {
       setTheme(storedTheme);
     }
-  }, []);
+
+    // Initialize persistent authentication
+    authManager.setupAutoLogout();
+    
+    // Check and restore authentication state on app load
+    const authState = authManager.checkAuthState();
+    if (authState.isAuthenticated && !authManager.isSessionValid()) {
+      // Session expired, logout user
+      if (authState.userType === 'user') {
+        authManager.logoutUser();
+      } else {
+        authManager.logoutAdmin();
+      }
+    }
+  }, [authManager]);
 
   const handleLogout = () => {
     userLogout();
@@ -103,7 +119,22 @@ const AppContent = () => {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/signin" element={<SignIn />} />
         <Route path="/membership" element={<MembershipPlans />} />
-        <Route path="/payment" element={<ProtectedRoute><PaymentIntegration selectedPlan={{name: 'Professional', price: 99, period: 'month'}} onPaymentComplete={() => navigate('/dashboard')} /></ProtectedRoute>} />
+        <Route 
+          path="/payment" 
+          element={
+            <ProtectedRoute>
+              <PaymentFlow />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/questionnaire" 
+          element={
+            <ProtectedRoute>
+              <Questionnaire />
+            </ProtectedRoute>
+          } 
+        />
         {/* <Route path="/questionnaire" element={<Questionnaire />} /> */}
         <Route path="/risk-management" element={<RiskManagementPage />} />
         <Route path="/risk-management-plan" element={<RiskManagementPlan />} />
