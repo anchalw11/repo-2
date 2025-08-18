@@ -6,7 +6,7 @@ export interface User {
   name?: string;
   email?: string;
   membershipTier?: string;
-  accountType?: 'personal' | 'business';
+  accountType?: 'personal' | 'business' | 'funded';
   riskTolerance?: 'conservative' | 'moderate' | 'aggressive';
   isAuthenticated: boolean;
   setupComplete?: boolean;

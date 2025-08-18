@@ -1,44 +1,22 @@
 // Dynamic API URL configuration
 const getApiBaseUrl = () => {
-  const isDev = import.meta.env.DEV;
-  const hostname = window.location.hostname;
-  const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
-  const isAmplify = hostname.includes('amplifyapp.com');
-
-  if (isDev || isLocal) {
-    // Development environment - use local backend
-    const apiUrl = 'http://localhost:5000/api';
-    console.log('API Base URL (dev):', apiUrl, { isDev, isLocal, isAmplify, hostname });
-    return apiUrl;
-  }
-
-    // For Amplify deployment, use the production backend
-  if (isAmplify) {
-    const apiUrl = 'https://traderedgepro.com/api';
-    console.log('API Base URL (Amplify with production backend):', apiUrl, { isAmplify, hostname });
-    return apiUrl;
-  }
-
-  // Production: Use environment variable or fallback to local backend
-  const fromEnv = import.meta.env.VITE_API_URL as string | undefined;
+  // For development and testing, always use local backend
+  // In production, this should be set via environment variables
+  const apiUrl = 'https://repo-2-1vzb.onrender.com';
   
-  // If environment variable is set, use it
-  if (fromEnv) {
-    console.log('API Base URL (prod from env):', fromEnv, { fromEnv, hostname });
-    return fromEnv;
-  }
-  
-  // Fallback to local backend instead of broken production server
-  const apiUrl = 'http://localhost:5000/api';
-  
-  console.log('API Base URL (fallback to local):', apiUrl, {
-    fromEnv,
-    NODE_ENV: process.env.NODE_ENV,
-    isDev,
-    isLocal,
-    isAmplify,
-    hostname
+  // Log the configuration for debugging
+  console.log('API Configuration:', {
+    apiUrl,
+    hostname: window.location.hostname,
+    env: import.meta.env.MODE,
+    isDev: import.meta.env.DEV,
+    isProd: import.meta.env.PROD,
+    envVars: {
+      VITE_API_URL: import.meta.env.VITE_API_URL,
+      NODE_ENV: import.meta.env.NODE_ENV
+    }
   });
+  
   return apiUrl;
 };
 
